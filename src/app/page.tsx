@@ -13,11 +13,23 @@ type GitHubUser = {
   html_url: string;
 };
 
+type GitHubRepository = {
+  id: number;
+  name: string;
+  description: string | null;
+  html_url: string;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  updated_at: string;
+};
+
 export default function Home() {
   const [username, setUsername] = useState<string>("");
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,16 +43,32 @@ export default function Home() {
       setError("");
       setUser(null);
 
-      const response = await fetch(
+      const userResponse = await fetch(
         `https://api.github.com/users/${trimmedUsername}`,
       );
 
-      if (!response.ok) throw new Error("GitHub user not found");
+      if (!userResponse.ok) throw new Error("GitHub user not found");
 
-      const data: GitHubUser = await response.json();
-      setUser(data);
+      const userData: GitHubUser = await userResponse.json();
+
+      const repositoriesResponse = await fetch(
+        `https://api.github.com/users/${trimmedUsername}/repos?sort=updated&direction=desc&per_page=100`,
+      );
+
+      if (!repositoriesResponse.ok)
+        throw new Error("Failed to load repositories");
+
+      const repositoriesData: GitHubRepository[] =
+        await repositoriesResponse.json();
+
+      setUser(userData);
+      setRepositories(repositoriesData);
     } catch (error) {
-      if (error instanceof Error) setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -83,51 +111,107 @@ export default function Home() {
         {error && <p className="mt-6 text-center text-red-600">{error}</p>}
 
         {user && (
-          <div className="mt-10 rounded-xl border border-gray-200 p-6">
-            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-              <img
-                src={user.avatar_url}
-                alt={user.login}
-                className="h-28 w-28 rounded-full"
-              />
+          <>
+            <div className="mt-10 rounded-xl border border-gray-200 p-6">
+              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+                <img
+                  src={user.avatar_url}
+                  alt={user.login}
+                  className="h-28 w-28 rounded-full"
+                />
 
-              <div className="flex-1 text-center sm:text-left">
-                <h2 className="text-2xl font-bold">
-                  {user.name ?? user.login}
-                </h2>
+                <div className="flex-1 text-center sm:text-left">
+                  <h2 className="text-2xl font-bold">
+                    {user.name ?? user.login}
+                  </h2>
 
-                <p className="text-gray-500">@{user.login}</p>
+                  <p className="text-gray-500">@{user.login}</p>
 
-                {user.bio && <p className="mt-3 text-gray-700">{user.bio}</p>}
+                  {user.bio && <p className="mt-3 text-gray-700">{user.bio}</p>}
 
-                <div className="mt-5 flex flex-wrap justify-center gap-5 sm:justify-start">
-                  <div>
-                    <span className="font-bold">{user.public_repos}</span>{" "}
-                    Repositories
+                  <div className="mt-5 flex flex-wrap justify-center gap-5 sm:justify-start">
+                    <div>
+                      <span className="font-bold">{user.public_repos}</span>{" "}
+                      Repositories
+                    </div>
+
+                    <div>
+                      <span className="font-bold">{user.followers}</span>{" "}
+                      Followers
+                    </div>
+
+                    <div>
+                      <span className="font-bold">{user.following}</span>{" "}
+                      Following
+                    </div>
                   </div>
 
-                  <div>
-                    <span className="font-bold">{user.followers}</span>{" "}
-                    Followers
-                  </div>
-
-                  <div>
-                    <span className="font-bold">{user.following}</span>{" "}
-                    Following
-                  </div>
+                  <a
+                    href={user.html_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 inline-block font-medium underline"
+                  >
+                    Open GitHub profile
+                  </a>
                 </div>
-
-                <a
-                  href={user.html_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-5 inline-block font-medium underline"
-                >
-                  Open GitHub profile
-                </a>
               </div>
             </div>
-          </div>
+
+            {repositories.length === 0 && (
+              <div className="mt-10 rounded-xl border border-gray-200 p-6 text-center">
+                <p className="text-gray-500">No public repositories found.</p>
+              </div>
+            )}
+
+            {repositories.length > 0 && (
+              <section className="mt-10">
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Repositories</h2>
+
+                  <span className="text-sm text-gray-500">
+                    {repositories.length} repositories
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {repositories.map((repository) => (
+                    <article
+                      key={repository.id}
+                      className="flex min-h-44 flex-col rounded-xl border border-gray-200 p-5"
+                    >
+                      <a
+                        href={repository.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-lg font-semibold hover:underline"
+                      >
+                        {repository.name}
+                      </a>
+
+                      <p className="mt-2 line-clamp-2 text-sm text-gray-600">
+                        {repository.description ?? "No description"}
+                      </p>
+
+                      <div className="mt-auto flex flex-wrap gap-3 pt-5 text-sm text-gray-600">
+                        {repository.language && (
+                          <span>{repository.language}</span>
+                        )}
+
+                        <span>⭐ {repository.stargazers_count}</span>
+
+                        <span>Forks: {repository.forks_count}</span>
+                      </div>
+                      <span>
+                        Updated:{" "}
+                        {new Date(repository.updated_at).toLocaleDateString()}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </section>
     </main>
