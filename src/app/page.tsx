@@ -24,12 +24,18 @@ type GitHubRepository = {
   updated_at: string;
 };
 
+type PackageJson = {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+};
+
 export default function Home() {
   const [username, setUsername] = useState<string>("");
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
+  const [technologies, setTechnologies] = useState<string[]>([]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,11 +49,20 @@ export default function Home() {
       setError("");
       setUser(null);
 
+      setRepositories([]);
+      setTechnologies([]);
+
       const userResponse = await fetch(
         `https://api.github.com/users/${trimmedUsername}`,
       );
 
-      if (!userResponse.ok) throw new Error("GitHub user not found");
+      if (userResponse.status === 404) throw new Error("GitHub user not found");
+      if (userResponse.status === 403)
+        throw new Error(
+          "GitHub API rate limit exceeded. Please try again later.",
+        );
+
+      if (!userResponse.ok) throw new Error("Failed to load GitHub user");
 
       const userData: GitHubUser = await userResponse.json();
 
@@ -63,6 +78,13 @@ export default function Home() {
 
       setUser(userData);
       setRepositories(repositoriesData);
+
+      const detectedTechnologies = await detectTechnologies(
+        trimmedUsername,
+        repositoriesData,
+      );
+
+      setTechnologies(detectedTechnologies);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -74,6 +96,48 @@ export default function Home() {
     }
 
     console.log("GitHub username:", trimmedUsername);
+  };
+
+  const detectTechnologies = async (
+    username: string,
+    repositories: GitHubRepository[],
+  ) => {
+    const technologies = new Set<string>();
+
+    for (const repository of repositories.slice(0, 10)) {
+      try {
+        const response = await fetch(
+          `https://api.github.com/repos/${username}/${repository.name}/contents/package.json`,
+        );
+
+        if (!response.ok) continue;
+
+        const file = await response.json();
+        const content = atob(file.content.replace(/\n/g, ""));
+        const packageJson: PackageJson = JSON.parse(content);
+
+        const dependencies = {
+          ...packageJson.dependencies,
+          ...packageJson.devDependencies,
+        };
+
+        if ("react" in dependencies) technologies.add("React");
+        if ("next" in dependencies) technologies.add("Next.js");
+        if ("typescript" in dependencies) technologies.add("TypeScript");
+        if ("@prisma/client" in dependencies || "prisma" in dependencies)
+          technologies.add("Prisma");
+        if ("zod" in dependencies) technologies.add("Zod");
+        if ("tailwindcss" in dependencies) technologies.add("Tailwind CSS");
+        if ("@tanstack/react-query" in dependencies)
+          technologies.add("TanStack Query");
+        if ("react-hook-form" in dependencies)
+          technologies.add("React Hook Form");
+      } catch {
+        continue;
+      }
+    }
+
+    return Array.from(technologies);
   };
 
   const totalStars = repositories.reduce(
@@ -106,7 +170,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
-      <section className="w-full max-w-2xl">
+      <section className="w-full max-w-5xl">
         <div className="text-center">
           <h1 className="mb-4 text-4xl font-bold">GitHub Profile Analyzer</h1>
 
@@ -216,6 +280,23 @@ export default function Home() {
                       {uniqueLanguages.size}
                     </div>
                   </div>
+                </div>
+              </section>
+            )}
+
+            {technologies.length > 0 && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Technologies</h2>
+
+                <div className="flex flex-wrap gap-3">
+                  {technologies.map((technology) => (
+                    <span
+                      key={technology}
+                      className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium"
+                    >
+                      {technology}
+                    </span>
+                  ))}
                 </div>
               </section>
             )}
