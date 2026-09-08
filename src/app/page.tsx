@@ -76,6 +76,34 @@ export default function Home() {
     console.log("GitHub username:", trimmedUsername);
   };
 
+  const totalStars = repositories.reduce(
+    (total, repository) => total + repository.stargazers_count,
+    0,
+  );
+
+  const totalForks = repositories.reduce(
+    (total, repository) => total + repository.forks_count,
+    0,
+  );
+
+  const languages = repositories
+    .map((repository) => repository.language)
+    .filter((language): language is string => language !== null);
+
+  const uniqueLanguages = new Set(languages);
+
+  const languageCount = languages.reduce<Record<string, number>>(
+    (count, language) => {
+      count[language] = (count[language] ?? 0) + 1;
+
+      return count;
+    },
+    {},
+  );
+
+  const topLanguage =
+    Object.entries(languageCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "N/A";
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-2xl">
@@ -157,6 +185,40 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {user && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Analytics</h2>
+
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Total Stars</p>
+
+                    <p className="mt-2 text-2xl font-bold">{totalStars}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Total Forks</p>
+
+                    <p className="mt-2 text-2xl font-bold">{totalForks}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Top Language</p>
+
+                    <p className="mt-2 text-2xl font-bold">{topLanguage}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Languages</p>
+
+                    <div className="mt-2 text-2xl font-bold">
+                      {uniqueLanguages.size}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {repositories.length === 0 && (
               <div className="mt-10 rounded-xl border border-gray-200 p-6 text-center">
