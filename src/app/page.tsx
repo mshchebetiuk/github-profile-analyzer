@@ -1,5 +1,6 @@
 "use client";
 
+import { recordTraceEvents } from "next/dist/trace";
 import { FormEvent, useState } from "react";
 
 type GitHubUser = {
@@ -103,6 +104,82 @@ export default function Home() {
 
   const topLanguage =
     Object.entries(languageCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "N/A";
+
+  const calculateProfileScore = () => {
+    if (!user) return 0;
+
+    let score = 0;
+
+    if (user.name) score += 10;
+    if (user.bio) score += 10;
+
+    if (repositories.length >= 3) score += 10;
+    if (repositories.length >= 5) score += 10;
+
+    const repositoriesWithDescription = repositories.filter(
+      (repository) => repository.description,
+    ).length;
+
+    if (repositories.length > 0) {
+      const descriptionRatio =
+        repositoriesWithDescription / repositories.length;
+
+      if (descriptionRatio >= 0.5) score += 10;
+      if (descriptionRatio >= 0.8) score += 10;
+    }
+
+    if (technologies.length >= 3) score += 10;
+    if (technologies.length >= 5) score += 10;
+
+    if (user.followers >= 1) score += 5;
+    if (user.followers >= 5) score += 5;
+
+    if (totalStars >= 1) score += 5;
+    if (totalStars >= 5) score += 5;
+
+    return Math.min(score, 100);
+  };
+
+  const profileScore = calculateProfileScore();
+
+  const getRecommendations = () => {
+    if (!user) return [];
+
+    const recommendations: string[] = [];
+
+    if (!user.bio) recommendations.push("Add a bio to your GitHub profile.");
+    if (repositories.length < 5)
+      recommendations.push(
+        "Add more public projects to demonstrate your skills.",
+      );
+
+    const repositoriesWithoutDescription = repositories.filter(
+      (repository) => !repository.description,
+    );
+
+    if (repositoriesWithoutDescription.length > 0)
+      recommendations.push(
+        "Add descriptions to repositories that do not have one.",
+      );
+    if (technologies.length < 3)
+      recommendations.push(
+        "Show more technologies across your public projects.",
+      );
+    if (totalStars === 0)
+      recommendations.push(
+        "Improve project presentation to attract more GitHub engagement.",
+      );
+
+    if (recommendations.length === 0) {
+      recommendations.push(
+        "Your GitHub profile is well structured. Keep projects active and updated.",
+      );
+    }
+
+    return recommendations;
+  };
+
+  const recommendations = getRecommendations();
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -233,6 +310,47 @@ export default function Home() {
                       {technology}
                     </span>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {user && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Profile Score</h2>
+
+                <div className="rounded-xl border border-gray-200 p-6">
+                  <div className="flex items-end gap-2">
+                    <span className="text-5xl font-bold">{profileScore}</span>
+
+                    <span className="mb-1 text-lg text-gray-500">/ 100</span>
+                  </div>
+
+                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className="h-full rounded-full bg-black transition-all"
+                      style={{ width: `${profileScore}%` }}
+                    />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {user && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Recommendations</h2>
+
+                <div className="rounded-xl border border-gray-200 p-6">
+                  <ul className="space-y-3">
+                    {recommendations.map((recommendation) => (
+                      <li
+                        key={recommendation}
+                        className="flex gap-3 text-gray-700"
+                      >
+                        <span>•</span>
+                        <span>{recommendation}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </section>
             )}
