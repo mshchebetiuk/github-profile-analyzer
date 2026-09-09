@@ -24,11 +24,6 @@ type GitHubRepository = {
   updated_at: string;
 };
 
-type PackageJson = {
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-};
-
 export default function Home() {
   const [username, setUsername] = useState<string>("");
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -63,16 +58,11 @@ export default function Home() {
 
       const userData: GitHubUser = data.user;
       const repositoriesData: GitHubRepository[] = data.repositories;
+      const technologiesData: string[] = data.technologies;
 
       setUser(userData);
       setRepositories(repositoriesData);
-
-      const detectedTechnologies = await detectTechnologies(
-        trimmedUsername,
-        repositoriesData,
-      );
-
-      setTechnologies(detectedTechnologies);
+      setTechnologies(technologiesData);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -84,48 +74,6 @@ export default function Home() {
     }
 
     console.log("GitHub username:", trimmedUsername);
-  };
-
-  const detectTechnologies = async (
-    username: string,
-    repositories: GitHubRepository[],
-  ) => {
-    const technologies = new Set<string>();
-
-    for (const repository of repositories.slice(0, 10)) {
-      try {
-        const response = await fetch(
-          `https://api.github.com/repos/${username}/${repository.name}/contents/package.json`,
-        );
-
-        if (!response.ok) continue;
-
-        const file = await response.json();
-        const content = atob(file.content.replace(/\n/g, ""));
-        const packageJson: PackageJson = JSON.parse(content);
-
-        const dependencies = {
-          ...packageJson.dependencies,
-          ...packageJson.devDependencies,
-        };
-
-        if ("react" in dependencies) technologies.add("React");
-        if ("next" in dependencies) technologies.add("Next.js");
-        if ("typescript" in dependencies) technologies.add("TypeScript");
-        if ("@prisma/client" in dependencies || "prisma" in dependencies)
-          technologies.add("Prisma");
-        if ("zod" in dependencies) technologies.add("Zod");
-        if ("tailwindcss" in dependencies) technologies.add("Tailwind CSS");
-        if ("@tanstack/react-query" in dependencies)
-          technologies.add("TanStack Query");
-        if ("react-hook-form" in dependencies)
-          technologies.add("React Hook Form");
-      } catch {
-        continue;
-      }
-    }
-
-    return Array.from(technologies);
   };
 
   const totalStars = repositories.reduce(
