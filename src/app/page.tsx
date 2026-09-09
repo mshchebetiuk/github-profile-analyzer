@@ -52,29 +52,17 @@ export default function Home() {
       setRepositories([]);
       setTechnologies([]);
 
-      const userResponse = await fetch(
-        `https://api.github.com/users/${trimmedUsername}`,
+      const response = await fetch(
+        `/api/github?username=${encodeURIComponent(trimmedUsername)}`,
       );
 
-      if (userResponse.status === 404) throw new Error("GitHub user not found");
-      if (userResponse.status === 403)
-        throw new Error(
-          "GitHub API rate limit exceeded. Please try again later.",
-        );
+      const data = await response.json();
 
-      if (!userResponse.ok) throw new Error("Failed to load GitHub user");
+      if (!response.ok)
+        throw new Error(data.message ?? "Failed to analyze GitHub profile");
 
-      const userData: GitHubUser = await userResponse.json();
-
-      const repositoriesResponse = await fetch(
-        `https://api.github.com/users/${trimmedUsername}/repos?sort=updated&direction=desc&per_page=100`,
-      );
-
-      if (!repositoriesResponse.ok)
-        throw new Error("Failed to load repositories");
-
-      const repositoriesData: GitHubRepository[] =
-        await repositoriesResponse.json();
+      const userData: GitHubUser = data.user;
+      const repositoriesData: GitHubRepository[] = data.repositories;
 
       setUser(userData);
       setRepositories(repositoriesData);
