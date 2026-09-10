@@ -13,6 +13,11 @@ type GitHubContentFile = {
   content: string;
 };
 
+type RepositoryQuality = {
+  repository: string;
+  hasReadme: boolean;
+};
+
 async function detectTechnologies(
   username: string,
   repositories: GitHubRepository[],
@@ -57,6 +62,35 @@ async function detectTechnologies(
   }
 
   return Array.from(technologies);
+}
+
+async function analyzeRepositoryQuality(
+  username: string,
+  repositories: GitHubRepository[],
+  headers: HeadersInit,
+) {
+  const results: RepositoryQuality[] = [];
+
+  for (const repository of repositories.slice(0, 10)) {
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${username}/${repository.name}/readme`,
+        { headers },
+      );
+
+      results.push({
+        repository: repository.name,
+        hasReadme: response.ok,
+      });
+    } catch {
+      results.push({
+        repository: repository.name,
+        hasReadme: false,
+      });
+    }
+  }
+
+  return results;
 }
 
 export async function GET(request: NextRequest) {
@@ -119,10 +153,17 @@ export async function GET(request: NextRequest) {
       headers,
     );
 
+    const repositoryQuality = await analyzeRepositoryQuality(
+      username,
+      repositories,
+      headers,
+    );
+
     return NextResponse.json({
       user,
       repositories,
       technologies,
+      repositoryQuality,
     });
   } catch {
     return NextResponse.json(

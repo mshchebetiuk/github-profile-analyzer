@@ -25,6 +25,11 @@ type GitHubRepository = {
   updated_at: string;
 };
 
+type RepositoryQuality = {
+  repository: string;
+  hasReadme: boolean;
+};
+
 export default function Home() {
   const [username, setUsername] = useState<string>("");
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -32,6 +37,9 @@ export default function Home() {
   const [error, setError] = useState<string>("");
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [technologies, setTechnologies] = useState<string[]>([]);
+  const [repositoryQuality, setRepositoryQuality] = useState<
+    RepositoryQuality[]
+  >([]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -47,12 +55,14 @@ export default function Home() {
 
       setRepositories([]);
       setTechnologies([]);
+      setRepositoryQuality([]);
 
       const response = await fetch(
         `/api/github?username=${encodeURIComponent(trimmedUsername)}`,
       );
 
       const data = await response.json();
+      const repositoryQualityData: RepositoryQuality[] = data.repositoryQuality;
 
       if (!response.ok)
         throw new Error(data.message ?? "Failed to analyze GitHub profile");
@@ -64,6 +74,7 @@ export default function Home() {
       setUser(userData);
       setRepositories(repositoriesData);
       setTechnologies(technologiesData);
+      setRepositoryQuality(repositoryQualityData);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -105,6 +116,15 @@ export default function Home() {
   const topLanguage =
     Object.entries(languageCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "N/A";
 
+  const repositoriesWithReadme = repositoryQuality.filter(
+    (repository) => repository.hasReadme,
+  ).length;
+
+  const readmePercentage =
+    repositoryQuality.length > 0
+      ? Math.round((repositoriesWithReadme / repositoryQuality.length) * 100)
+      : 0;
+
   const calculateProfileScore = () => {
     if (!user) return 0;
 
@@ -136,6 +156,13 @@ export default function Home() {
 
     if (totalStars >= 1) score += 5;
     if (totalStars >= 5) score += 5;
+
+    if (readmePercentage >= 50) score += 5;
+    if (readmePercentage >= 80) score += 5;
+
+    if (readmePercentage < 80) {
+      recommendations.push("Add README files to more repositories.");
+    }
 
     return Math.min(score, 100);
   };
@@ -310,6 +337,32 @@ export default function Home() {
                       {technology}
                     </span>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {repositoryQuality.length > 0 && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Repository Quality</h2>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">
+                      Repositories with README
+                    </p>
+
+                    <p className="mt-2 text-2xl font-bold">
+                      {repositoriesWithReadme} / {repositoryQuality.length}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">README Coverage</p>
+
+                    <p className="mt-2 text-2xl font-bold">
+                      {readmePercentage}%
+                    </p>
+                  </div>
                 </div>
               </section>
             )}
