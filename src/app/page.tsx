@@ -1,7 +1,7 @@
 "use client";
 
-import { recordTraceEvents } from "next/dist/trace";
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 
 type GitHubUser = {
   login: string;
@@ -40,6 +40,7 @@ export default function Home() {
   const [repositoryQuality, setRepositoryQuality] = useState<
     RepositoryQuality[]
   >([]);
+  const [currentTime] = useState(() => Date.now());
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -125,6 +126,42 @@ export default function Home() {
       ? Math.round((repositoriesWithReadme / repositoryQuality.length) * 100)
       : 0;
 
+  const sortedRepositories = [...repositories].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+  );
+
+  const latestRepository = sortedRepositories[0];
+
+  const lastActivityDate = latestRepository
+    ? new Date(latestRepository.updated_at)
+    : null;
+
+  const daysSinceLastActivity = lastActivityDate
+    ? Math.floor(
+        (currentTime - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24),
+      )
+    : null;
+
+  const recentlyActiveRepositories = repositories.filter((repository) => {
+    const updatedAt = new Date(repository.updated_at).getTime();
+
+    const daysDifference = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+    return daysDifference <= 30;
+  }).length;
+
+  const activityStatus =
+    daysSinceLastActivity === null
+      ? "No activity"
+      : daysSinceLastActivity <= 7
+        ? "Very active"
+        : daysSinceLastActivity <= 30
+          ? "Active"
+          : daysSinceLastActivity <= 90
+            ? "Moderately active"
+            : "Inactive";
+
   const calculateProfileScore = () => {
     if (!user) return 0;
 
@@ -162,6 +199,14 @@ export default function Home() {
 
     if (readmePercentage < 80) {
       recommendations.push("Add README files to more repositories.");
+    }
+
+    if (daysSinceLastActivity !== null && daysSinceLastActivity <= 30) {
+      score += 5;
+    }
+
+    if (daysSinceLastActivity !== null && daysSinceLastActivity > 90) {
+      recommendations.push("Update your public projects more regularly.");
     }
 
     return Math.min(score, 100);
@@ -246,10 +291,12 @@ export default function Home() {
           <>
             <div className="mt-10 rounded-xl border border-gray-200 p-6">
               <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-                <img
+                <Image
                   src={user.avatar_url}
                   alt={user.login}
-                  className="h-28 w-28 rounded-full"
+                  width={112}
+                  height={112}
+                  className="rounded-full"
                 />
 
                 <div className="flex-1 text-center sm:text-left">
@@ -361,6 +408,38 @@ export default function Home() {
 
                     <p className="mt-2 text-2xl font-bold">
                       {readmePercentage}%
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {user && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Activity</h2>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Activity Status</p>
+
+                    <p className="mt-2 text-xl font-bold">{activityStatus}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Last Activity</p>
+
+                    <p className="mt-2 text-xl font-bold">
+                      {daysSinceLastActivity !== null
+                        ? `${daysSinceLastActivity} days ago`
+                        : "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Active Repositories</p>
+
+                    <p className="mt-2 text-xl font-bold">
+                      {recentlyActiveRepositories}
                     </p>
                   </div>
                 </div>
