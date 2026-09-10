@@ -253,6 +253,44 @@ export default function Home() {
 
   const recommendations = getRecommendations();
 
+  const calculateRepositoryScore = (repository: GitHubRepository) => {
+    let score = 0;
+
+    if (repository.description) score += 10;
+    if (repository.language) score += 10;
+
+    score += Math.min(repository.stargazers_count * 2, 20);
+    score += Math.min(repository.forks_count * 2, 10);
+
+    const updatedAt = new Date(repository.updated_at).getTime();
+
+    const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+    if (daysSinceUpdate <= 30) {
+      score += 20;
+    } else if (daysSinceUpdate <= 90) {
+      score += 10;
+    }
+
+    return score;
+  };
+
+  const bestRepository = repositories.reduce<GitHubRepository | null>(
+    (best, repository) => {
+      if (!best) return repository;
+
+      const currentScore = calculateRepositoryScore(repository);
+      const bestScore = calculateRepositoryScore(best);
+
+      return currentScore > bestScore ? repository : best;
+    },
+    null,
+  );
+
+  const bestRepositoryScore = bestRepository
+    ? calculateRepositoryScore(bestRepository)
+    : 0;
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-5xl">
@@ -441,6 +479,54 @@ export default function Home() {
                     <p className="mt-2 text-xl font-bold">
                       {recentlyActiveRepositories}
                     </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {bestRepository && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Best Project</h2>
+
+                <div className="rounded-xl border border-gray-200 p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <a
+                        href={bestRepository.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xl font-bold hover:underline"
+                      >
+                        {bestRepository.name}
+                      </a>
+
+                      <p className="mt-2 text-gray-600">
+                        {bestRepository.description ?? "No description"}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0">
+                      <span className="text-2xl font-bold">
+                        {bestRepositoryScore}
+                      </span>
+
+                      <span className="text-gray-500"> points</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap gap-4 text-sm text-gray-600">
+                    {bestRepository.language && (
+                      <span>{bestRepository.language}</span>
+                    )}
+
+                    <span>⭐ {bestRepository.stargazers_count}</span>
+
+                    <span>Forks: {bestRepository.forks_count}</span>
+
+                    <span>
+                      Updated{" "}
+                      {new Date(bestRepository.updated_at).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
               </section>
