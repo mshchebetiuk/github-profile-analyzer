@@ -314,6 +314,24 @@ export default function Home() {
     }))
     .sort((a, b) => b.count - a.count);
 
+  const averageStars =
+    repositories.length > 0 ? Math.round(totalStars / repositories.length) : 0;
+
+  const averageForks =
+    repositories.length > 0 ? Math.round(totalForks / repositories.length) : 0;
+
+  const repositoriesWithoutDescription = repositories.filter(
+    (repository) => !repository.description,
+  ).length;
+
+  const inactiveRepositories = repositories.filter((repository) => {
+    const updatedAt = new Date(repository.updated_at).getTime();
+
+    const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+    return daysSinceUpdate > 90;
+  }).length;
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-5xl">
@@ -481,6 +499,46 @@ export default function Home() {
                       </p>
                     </div>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {user && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Repository Insights</h2>
+
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Average Stars</p>
+
+                    <p className="mt-2 text-2xl font-bold">{averageStars}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">Average Forks</p>
+
+                    <p className="mt-2 text-2xl font-bold">{averageForks}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">
+                      Missing Descriptions
+                    </p>
+
+                    <p className="mt-2 text-2xl font-bold">
+                      {repositoriesWithoutDescription}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-sm text-gray-500">
+                      Inactive Repositories
+                    </p>
+
+                    <p className="mt-2 text-2xl font-bold">
+                      {inactiveRepositories}
+                    </p>
+                  </div>
                 </div>
               </section>
             )}
