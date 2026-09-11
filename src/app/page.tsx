@@ -259,6 +259,12 @@ export default function Home() {
     if (repository.description) score += 10;
     if (repository.language) score += 10;
 
+    const quality = repositoryQuality.find(
+      (item) => item.repository === repository.name,
+    );
+
+    if (quality?.hasReadme) score += 15;
+
     score += Math.min(repository.stargazers_count * 2, 20);
     score += Math.min(repository.forks_count * 2, 10);
 
@@ -290,6 +296,10 @@ export default function Home() {
   const bestRepositoryScore = bestRepository
     ? calculateRepositoryScore(bestRepository)
     : 0;
+
+  const bestRepositoryQuality = bestRepository
+    ? repositoryQuality.find((item) => item.repository === bestRepository.name)
+    : undefined;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -518,6 +528,8 @@ export default function Home() {
                     {bestRepository.language && (
                       <span>{bestRepository.language}</span>
                     )}
+
+                    {bestRepositoryQuality?.hasReadme && <span>README ✓</span>}
 
                     <span>⭐ {bestRepository.stargazers_count}</span>
 
