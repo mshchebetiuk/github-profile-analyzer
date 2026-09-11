@@ -301,6 +301,19 @@ export default function Home() {
     ? repositoryQuality.find((item) => item.repository === bestRepository.name)
     : undefined;
 
+  const totalRepositoriesWithLanguage = languages.length;
+
+  const languageStatistics = Object.entries(languageCount)
+    .map(([language, count]) => ({
+      language,
+      count,
+      percentage:
+        totalRepositoriesWithLanguage > 0
+          ? Math.round((count / totalRepositoriesWithLanguage) * 100)
+          : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-5xl">
@@ -431,6 +444,42 @@ export default function Home() {
                     >
                       {technology}
                     </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {languageStatistics.length > 0 && (
+              <section className="mt-10">
+                <h2 className="mb-5 text-2xl font-bold">Language Statistics</h2>
+
+                <div className="space-y-4">
+                  {languageStatistics.map((item) => (
+                    <div
+                      key={item.language}
+                      className="rounded-xl border border-gray-200 p-5"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="font-medium">{item.language}</span>
+
+                        <span className="text-sm text-gray-500">
+                          {item.percentage}%
+                        </span>
+                      </div>
+
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className="h-full rounded-full bg-black"
+                          style={{
+                            width: `${item.percentage}%`,
+                          }}
+                        />
+                      </div>
+
+                      <p className="mt-2 text-sm text-gray-500">
+                        {item.count} repositories
+                      </p>
+                    </div>
                   ))}
                 </div>
               </section>
