@@ -46,6 +46,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"updated" | "stars" | "forks" | "name">(
     "updated",
   );
+  const [visibleRepositories, setVisibleRepositories] = useState(6);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -62,6 +63,7 @@ export default function Home() {
       setRepositories([]);
       setTechnologies([]);
       setRepositoryQuality([]);
+      setVisibleRepositories(6);
 
       const response = await fetch(
         `/api/github?username=${encodeURIComponent(trimmedUsername)}`,
@@ -373,6 +375,13 @@ export default function Home() {
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
     });
+
+  const displayedRepositories = filteredRepositories.slice(
+    0,
+    visibleRepositories,
+  );
+
+  const hasMoreRepositories = visibleRepositories < filteredRepositories.length;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -797,7 +806,7 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {filteredRepositories.map((repository) => (
+                  {displayedRepositories.map((repository) => (
                     <article
                       key={repository.id}
                       className="flex min-h-44 flex-col rounded-xl border border-gray-200 p-5"
@@ -830,6 +839,30 @@ export default function Home() {
                       </span>
                     </article>
                   ))}
+                </div>
+
+                <div className="mt-6 flex justify-center gap-3">
+                  {hasMoreRepositories && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleRepositories((current) => current + 6)
+                      }
+                      className="rounded-lg bg-black px-6 py-3 font-medium text-white"
+                    >
+                      Show More
+                    </button>
+                  )}
+
+                  {visibleRepositories > 6 && (
+                    <button
+                      type="button"
+                      onClick={() => setVisibleRepositories(6)}
+                      className="rounded-lg border border-gray-300 px-6 py-3 font-medium"
+                    >
+                      Show Less
+                    </button>
+                  )}
                 </div>
 
                 {filteredRepositories.length === 0 && (
