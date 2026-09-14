@@ -41,6 +41,11 @@ export default function Home() {
     RepositoryQuality[]
   >([]);
   const [currentTime] = useState(() => Date.now());
+  const [repositorySearch, setRepositorySearch] = useState<string>("");
+  const [languageFilter, setLanguageFilter] = useState<string>("All");
+  const [sortBy, setSortBy] = useState<"updated" | "stars" | "forks" | "name">(
+    "updated",
+  );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -197,16 +202,8 @@ export default function Home() {
     if (readmePercentage >= 50) score += 5;
     if (readmePercentage >= 80) score += 5;
 
-    if (readmePercentage < 80) {
-      recommendations.push("Add README files to more repositories.");
-    }
-
     if (daysSinceLastActivity !== null && daysSinceLastActivity <= 30) {
       score += 5;
-    }
-
-    if (daysSinceLastActivity !== null && daysSinceLastActivity > 90) {
-      recommendations.push("Update your public projects more regularly.");
     }
 
     return Math.min(score, 100);
@@ -246,6 +243,14 @@ export default function Home() {
       recommendations.push(
         "Your GitHub profile is well structured. Keep projects active and updated.",
       );
+    }
+
+    if (readmePercentage < 80) {
+      recommendations.push("Add README files to more repositories.");
+    }
+
+    if (daysSinceLastActivity !== null && daysSinceLastActivity > 90) {
+      recommendations.push("Update your pubilc project more regularly.");
     }
 
     return recommendations;
@@ -331,6 +336,43 @@ export default function Home() {
 
     return daysSinceUpdate > 90;
   }).length;
+
+  const availableLanguages = Array.from(
+    new Set(
+      repositories
+        .map((repository) => repository.language)
+        .filter((language): language is string => Boolean(language)),
+    ),
+  ).sort();
+
+  const filteredRepositories = repositories
+    .filter((repository) => {
+      const matchesSearch = repository.name
+        .toLowerCase()
+        .includes(repositorySearch.toLowerCase());
+
+      const matchesLanguage =
+        languageFilter === "All" || repository.language === languageFilter;
+
+      return matchesSearch && matchesLanguage;
+    })
+    .sort((a, b) => {
+      if (sortBy === "stars") {
+        return b.stargazers_count - a.stargazers_count;
+      }
+
+      if (sortBy === "forks") {
+        return b.forks_count - a.forks_count;
+      }
+
+      if (sortBy === "name") {
+        return a.name.localeCompare(b.name);
+      }
+
+      return (
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+    });
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -692,6 +734,51 @@ export default function Home() {
               </section>
             )}
 
+            <section className="mt-10">
+              <div className="mb-5 flex flex-col gap-4 md:flex-row">
+                <input
+                  type="text"
+                  value={repositorySearch}
+                  onChange={(e) => setRepositorySearch(e.target.value)}
+                  placeholder="Search repositories..."
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none"
+                />
+
+                <select
+                  value={languageFilter}
+                  onChange={(e) => setLanguageFilter(e.target.value)}
+                  className="rounded-xl border border-gray-200 px-4 py-3"
+                >
+                  <option value="All">All languages</option>
+
+                  {availableLanguages.map((language) => (
+                    <option key={language} value={language}>
+                      {language}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(event) =>
+                    setSortBy(
+                      event.target.value as
+                        | "updated"
+                        | "stars"
+                        | "forks"
+                        | "name",
+                    )
+                  }
+                  className="rounded-xl border border-gray-200 px-4 py-3"
+                >
+                  <option value="updated">Recently updated</option>
+                  <option value="stars">Most stars</option>
+                  <option value="forks">Most forks</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
+            </section>
+
             {repositories.length === 0 && (
               <div className="mt-10 rounded-xl border border-gray-200 p-6 text-center">
                 <p className="text-gray-500">No public repositories found.</p>
@@ -704,12 +791,13 @@ export default function Home() {
                   <h2 className="text-2xl font-bold">Repositories</h2>
 
                   <span className="text-sm text-gray-500">
-                    {repositories.length} repositories
+                    {filteredRepositories.length} of {repositories.length}{" "}
+                    repositories
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {repositories.map((repository) => (
+                  {filteredRepositories.map((repository) => (
                     <article
                       key={repository.id}
                       className="flex min-h-44 flex-col rounded-xl border border-gray-200 p-5"
@@ -743,6 +831,14 @@ export default function Home() {
                     </article>
                   ))}
                 </div>
+
+                {filteredRepositories.length === 0 && (
+                  <div className="mt-6 rounded-xl border border-gray-200 p-6 text-center">
+                    <p className="text-gray-500">
+                      No repositories match the selected filters.
+                    </p>
+                  </div>
+                )}
               </section>
             )}
           </>
