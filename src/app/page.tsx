@@ -47,6 +47,13 @@ export default function Home() {
     "updated",
   );
   const [visibleRepositories, setVisibleRepositories] = useState(6);
+  const [compareUsername, setCompareUsername] = useState("");
+  const [compareUser, setCompareUser] = useState<GitHubUser | null>(null);
+  const [compareRepositories, setCompareRepositories] = useState<
+    GitHubRepository[]
+  >([]);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareError, setCompareError] = useState("");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -94,6 +101,40 @@ export default function Home() {
     }
 
     console.log("GitHub username:", trimmedUsername);
+  };
+
+  const handleCompare = async () => {
+    const trimmedUsername = compareUsername.trim();
+
+    if (!trimmedUsername) return;
+
+    try {
+      setCompareLoading(true);
+      setCompareError("");
+      setCompareUser(null);
+      setCompareRepositories([]);
+
+      const response = await fetch(
+        `/api/github?username=${encodeURIComponent(trimmedUsername)}`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Failed to load comparison profile");
+      }
+
+      setCompareUser(data.user);
+      setCompareRepositories(data.repositories);
+    } catch (error) {
+      if (error instanceof Error) {
+        setCompareError(error.message);
+      } else {
+        setCompareError("Something went wrong");
+      }
+    } finally {
+      setCompareLoading(false);
+    }
   };
 
   const totalStars = repositories.reduce(
@@ -383,6 +424,13 @@ export default function Home() {
 
   const hasMoreRepositories = visibleRepositories < filteredRepositories.length;
 
+  const resetRepositoryFilters = () => {
+    setRepositorySearch("");
+    setLanguageFilter("All");
+    setSortBy("updated");
+    setVisibleRepositories(6);
+  };
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-5xl">
@@ -413,6 +461,31 @@ export default function Home() {
               {loading ? "Analyzing..." : "Analyze"}
             </button>
           </form>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              value={compareUsername}
+              onChange={(event) => {
+                setCompareUsername(event.target.value);
+              }}
+              placeholder="Compare with GitHub username..."
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
+            />
+
+            <button
+              type="button"
+              onClick={handleCompare}
+              disabled={!compareUsername.trim() || compareLoading}
+              className="rounded-lg border border-black px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {compareLoading ? "Comparing..." : "Compare"}
+            </button>
+
+            {compareError && (
+              <p className="mt-4 text-center text-red-600">{compareError}</p>
+            )}
+          </div>
         </div>
 
         {error && <p className="mt-6 text-center text-red-600">{error}</p>}
@@ -785,6 +858,14 @@ export default function Home() {
                   <option value="forks">Most forks</option>
                   <option value="name">Name</option>
                 </select>
+
+                <button
+                  type="button"
+                  onClick={resetRepositoryFilters}
+                  className="rounded-full border border-gray-300 px-4 py-3 font-medium hover:bg-gray-50"
+                >
+                  Reset
+                </button>
               </div>
             </section>
 
