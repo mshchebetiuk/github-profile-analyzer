@@ -620,34 +620,72 @@ export default function Home() {
 
                   <div className="grid grid-cols-3 border-b border-gray-200 p-4">
                     <span>Repositories</span>
-                    <span className="text-center">{repositories.length}</span>
+
+                    <span className="text-center">
+                      {repositories.length}
+                      {repositories.length > compareRepositories.length && " ✓"}
+                    </span>
+
                     <span className="text-center">
                       {compareRepositories.length}
+                      {compareRepositories.length > repositories.length && " ✓"}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 border-b border-gray-200 p-4">
                     <span>Followers</span>
-                    <span className="text-center">{user.followers}</span>
-                    <span className="text-center">{compareUser.followers}</span>
+
+                    <span className="text-center">
+                      {user.followers}
+                      {user.followers > compareUser.followers && " ✓"}
+                    </span>
+
+                    <span className="text-center">
+                      {compareUser.followers}
+                      {compareUser.followers > user.followers && " ✓"}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-3 border-b border-gray-200 p-4">
                     <span>Total Stars</span>
-                    <span className="text-center">{totalStars}</span>
-                    <span className="text-center">{compareTotalStars}</span>
+
+                    <span className="text-center">
+                      {totalStars}
+                      {totalStars > compareTotalStars && " ✓"}
+                    </span>
+
+                    <span className="text-center">
+                      {compareTotalStars}
+                      {compareTotalStars > totalStars && " ✓"}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-3 border-b border-gray-200 p-4">
                     <span>Total Forks</span>
-                    <span className="text-center">{totalForks}</span>
-                    <span className="text-center">{compareTotalForks}</span>
+
+                    <span className="text-center">
+                      {totalForks}
+                      {totalForks > compareTotalForks && " ✓"}
+                    </span>
+
+                    <span className="text-center">
+                      {compareTotalForks}
+                      {compareTotalForks > totalForks && " ✓"}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-3 p-4">
                     <span>Languages</span>
-                    <span className="text-center">{uniqueLanguages.size}</span>
-                    <span className="text-center">{compareLanguage.size}</span>
+
+                    <span className="text-center">
+                      {uniqueLanguages.size}
+                      {uniqueLanguages.size > compareLanguage.size && " ✓"}
+                    </span>
+
+                    <span className="text-center">
+                      {compareLanguage.size}
+                      {compareLanguage.size > uniqueLanguages.size && " ✓"}
+                    </span>
                   </div>
                 </div>
               </section>
