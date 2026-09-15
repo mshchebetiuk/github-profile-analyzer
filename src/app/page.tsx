@@ -431,6 +431,22 @@ export default function Home() {
     setVisibleRepositories(6);
   };
 
+  const compareTotalStars = compareRepositories.reduce(
+    (total, repository) => total + repository.stargazers_count,
+    0,
+  );
+
+  const compareTotalForks = compareRepositories.reduce(
+    (total, repository) => total + repository.forks_count,
+    0,
+  );
+
+  const compareLanguage = new Set(
+    compareRepositories
+      .map((repository) => repository.language)
+      .filter((language): language is string => language !== null),
+  );
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-5xl">
@@ -539,6 +555,54 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {user && compareUser && (
+              <section className="mb-10">
+                <h2 className="mb-5 text-2xl fonb-bold">Profile Comparison</h2>
+
+                <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <div className="grid grid-cols-3 borer-b border-gray-200 p-4 font-bold">
+                    <span>Metric</span>
+
+                    <span className="text-center">@{user.login}</span>
+
+                    <span className="text-center">@{compareUser.login}</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 border-b border-gray-200 p-4">
+                    <span>Repositories</span>
+                    <span className="text-center">{repositories.length}</span>
+                    <span className="text-center">
+                      {compareRepositories.length}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols 3 border-b border-gray-200 p-4">
+                    <span>Followers</span>
+                    <span className="text-center">{user.followers}</span>
+                    <span className="text-center">{compareUser.followers}</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 border-b border-gray-200 p-4">
+                    <span>Total Stars</span>
+                    <span className="text-center">{totalStars}</span>
+                    <span className="text-center">{compareTotalStars}</span>
+                  </div>
+                </div>
+
+                <div className="gid grid-cols-3 border-b border-gray-200 p-4">
+                  <span>Total Forks</span>
+                  <span className="text-center">{totalForks}</span>
+                  <span className="text-center">{compareTotalForks}</span>
+                </div>
+
+                <div className="grid grid-cols-3 p-4">
+                  <span>Languages</span>
+                  <span className="text-center">{uniqueLanguages.size}</span>
+                  <span className="text-center">{compareLanguage.size}</span>
+                </div>
+              </section>
+            )}
 
             {user && (
               <section className="mt-10">
