@@ -447,6 +447,29 @@ export default function Home() {
       .filter((language): language is string => language !== null),
   );
 
+  const getMetricWinner = (primaryValue: number, compareValue: number) => {
+    if (primaryValue > compareValue) return "primary";
+    if (compareValue > primaryValue) return "compare";
+
+    return "draw";
+  };
+
+  const comparisonResults = [
+    getMetricWinner(repositories.length, compareRepositories.length),
+    getMetricWinner(user?.followers ?? 0, compareUser?.followers ?? 0),
+    getMetricWinner(totalStars, compareTotalStars),
+    getMetricWinner(totalForks, compareTotalForks),
+    getMetricWinner(uniqueLanguages.size, compareLanguage.size),
+  ];
+
+  const primaryWins = comparisonResults.filter(
+    (result) => result === "primary",
+  ).length;
+
+  const compareWins = comparisonResults.filter(
+    (result) => result === "compare",
+  ).length;
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <section className="w-full max-w-5xl">
@@ -560,6 +583,32 @@ export default function Home() {
               <section className="mb-10">
                 <h2 className="mb-5 text-2xl fonb-bold">Profile Comparison</h2>
 
+                <div className="mb-5 rounded-xl border border-gray-200 p-5">
+                  <div className="flex items-center justify-center gap-6 text-center">
+                    <div>
+                      <p className="font-medium">@{user.login}</p>
+
+                      <p className="mt-1 text-3xl font-bold">{primaryWins}</p>
+                    </div>
+
+                    <span className="text-xl text-gray-400">:</span>
+
+                    <div>
+                      <p className="font-medium">@{compareUser.login}</p>
+
+                      <p className="mt-1 text-3xl font-bold">{compareWins}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center text-sm text-gray-500">
+                    {primaryWins > compareWins
+                      ? `@${user.login} wins`
+                      : compareWins > primaryWins
+                        ? `@${compareUser.login} wins`
+                        : "Draw"}
+                  </div>
+                </div>
+
                 <div className="overflow-hidden rounded-xl border border-gray-200">
                   <div className="grid grid-cols-3 borer-b border-gray-200 p-4 font-bold">
                     <span>Metric</span>
@@ -577,7 +626,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols 3 border-b border-gray-200 p-4">
+                  <div className="grid grid-cols-3 border-b border-gray-200 p-4">
                     <span>Followers</span>
                     <span className="text-center">{user.followers}</span>
                     <span className="text-center">{compareUser.followers}</span>
@@ -588,18 +637,18 @@ export default function Home() {
                     <span className="text-center">{totalStars}</span>
                     <span className="text-center">{compareTotalStars}</span>
                   </div>
-                </div>
 
-                <div className="gid grid-cols-3 border-b border-gray-200 p-4">
-                  <span>Total Forks</span>
-                  <span className="text-center">{totalForks}</span>
-                  <span className="text-center">{compareTotalForks}</span>
-                </div>
+                  <div className="grid grid-cols-3 border-b border-gray-200 p-4">
+                    <span>Total Forks</span>
+                    <span className="text-center">{totalForks}</span>
+                    <span className="text-center">{compareTotalForks}</span>
+                  </div>
 
-                <div className="grid grid-cols-3 p-4">
-                  <span>Languages</span>
-                  <span className="text-center">{uniqueLanguages.size}</span>
-                  <span className="text-center">{compareLanguage.size}</span>
+                  <div className="grid grid-cols-3 p-4">
+                    <span>Languages</span>
+                    <span className="text-center">{uniqueLanguages.size}</span>
+                    <span className="text-center">{compareLanguage.size}</span>
+                  </div>
                 </div>
               </section>
             )}
