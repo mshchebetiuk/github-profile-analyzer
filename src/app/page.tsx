@@ -1,7 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Image from "next/image";
+
+import ProfileCard from "@/app/components/ProfileCard";
+import Analytics from "@/app/components/Analytics";
+import Technologies from "@/app/components/Technologies";
+import LanguageStatistics from "@/app/components/LanguageStatistics";
+import RepositoryInsights from "@/app/components/RepositoryInsights";
+import RepositoryQuality from "@/app/components/RepositoryQuality";
+import Activity from "@/app/components/Activity";
+import BestProject from "@/app/components/BestProject";
 
 type GitHubUser = {
   login: string;
@@ -25,7 +33,7 @@ type GitHubRepository = {
   updated_at: string;
 };
 
-type RepositoryQuality = {
+type RepositoryQualityResult = {
   repository: string;
   hasReadme: boolean;
 };
@@ -38,7 +46,7 @@ export default function Home() {
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [technologies, setTechnologies] = useState<string[]>([]);
   const [repositoryQuality, setRepositoryQuality] = useState<
-    RepositoryQuality[]
+    RepositoryQualityResult[]
   >([]);
   const [currentTime] = useState(() => Date.now());
   const [repositorySearch, setRepositorySearch] = useState<string>("");
@@ -77,7 +85,8 @@ export default function Home() {
       );
 
       const data = await response.json();
-      const repositoryQualityData: RepositoryQuality[] = data.repositoryQuality;
+      const repositoryQualityData: RepositoryQualityResult[] =
+        data.repositoryQuality;
 
       if (!response.ok)
         throw new Error(data.message ?? "Failed to analyze GitHub profile");
@@ -531,53 +540,7 @@ export default function Home() {
 
         {user && (
           <>
-            <div className="mt-10 rounded-xl border border-gray-200 p-6">
-              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-                <Image
-                  src={user.avatar_url}
-                  alt={user.login}
-                  width={112}
-                  height={112}
-                  className="rounded-full"
-                />
-
-                <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-2xl font-bold">
-                    {user.name ?? user.login}
-                  </h2>
-
-                  <p className="text-gray-500">@{user.login}</p>
-
-                  {user.bio && <p className="mt-3 text-gray-700">{user.bio}</p>}
-
-                  <div className="mt-5 flex flex-wrap justify-center gap-5 sm:justify-start">
-                    <div>
-                      <span className="font-bold">{user.public_repos}</span>{" "}
-                      Repositories
-                    </div>
-
-                    <div>
-                      <span className="font-bold">{user.followers}</span>{" "}
-                      Followers
-                    </div>
-
-                    <div>
-                      <span className="font-bold">{user.following}</span>{" "}
-                      Following
-                    </div>
-                  </div>
-
-                  <a
-                    href={user.html_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-5 inline-block font-medium underline"
-                  >
-                    Open GitHub profile
-                  </a>
-                </div>
-              </div>
-            </div>
+            <ProfileCard user={user} />
 
             {user && compareUser && (
               <section className="mb-10">
@@ -691,240 +654,41 @@ export default function Home() {
               </section>
             )}
 
-            {user && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Analytics</h2>
+            <Analytics
+              totalStars={totalStars}
+              totalForks={totalForks}
+              topLanguage={topLanguage}
+              languagesCount={uniqueLanguages.size}
+            />
 
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Total Stars</p>
+            <Technologies technologies={technologies} />
 
-                    <p className="mt-2 text-2xl font-bold">{totalStars}</p>
-                  </div>
+            <LanguageStatistics statistics={languageStatistics} />
 
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Total Forks</p>
+            <RepositoryInsights
+              averageStars={averageStars}
+              averageForks={averageForks}
+              repositoriesWithoutDescription={repositoriesWithoutDescription}
+              inactiveRepositories={inactiveRepositories}
+            />
 
-                    <p className="mt-2 text-2xl font-bold">{totalForks}</p>
-                  </div>
+            <RepositoryQuality
+              repositoriesWithReadme={repositoriesWithReadme}
+              totalRepositories={repositoryQuality.length}
+              readmePercentage={readmePercentage}
+            />
 
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Top Language</p>
+            <Activity
+              activityStatus={activityStatus}
+              daysSinceLastActivity={daysSinceLastActivity}
+              recentlyActiveRepositories={recentlyActiveRepositories}
+            />
 
-                    <p className="mt-2 text-2xl font-bold">{topLanguage}</p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Languages</p>
-
-                    <div className="mt-2 text-2xl font-bold">
-                      {uniqueLanguages.size}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {technologies.length > 0 && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Technologies</h2>
-
-                <div className="flex flex-wrap gap-3">
-                  {technologies.map((technology) => (
-                    <span
-                      key={technology}
-                      className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium"
-                    >
-                      {technology}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {languageStatistics.length > 0 && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Language Statistics</h2>
-
-                <div className="space-y-4">
-                  {languageStatistics.map((item) => (
-                    <div
-                      key={item.language}
-                      className="rounded-xl border border-gray-200 p-5"
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="font-medium">{item.language}</span>
-
-                        <span className="text-sm text-gray-500">
-                          {item.percentage}%
-                        </span>
-                      </div>
-
-                      <div className="h-3 overflow-hidden rounded-full bg-gray-200">
-                        <div
-                          className="h-full rounded-full bg-black"
-                          style={{
-                            width: `${item.percentage}%`,
-                          }}
-                        />
-                      </div>
-
-                      <p className="mt-2 text-sm text-gray-500">
-                        {item.count} repositories
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {user && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Repository Insights</h2>
-
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Average Stars</p>
-
-                    <p className="mt-2 text-2xl font-bold">{averageStars}</p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Average Forks</p>
-
-                    <p className="mt-2 text-2xl font-bold">{averageForks}</p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">
-                      Missing Descriptions
-                    </p>
-
-                    <p className="mt-2 text-2xl font-bold">
-                      {repositoriesWithoutDescription}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">
-                      Inactive Repositories
-                    </p>
-
-                    <p className="mt-2 text-2xl font-bold">
-                      {inactiveRepositories}
-                    </p>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {repositoryQuality.length > 0 && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Repository Quality</h2>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">
-                      Repositories with README
-                    </p>
-
-                    <p className="mt-2 text-2xl font-bold">
-                      {repositoriesWithReadme} / {repositoryQuality.length}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">README Coverage</p>
-
-                    <p className="mt-2 text-2xl font-bold">
-                      {readmePercentage}%
-                    </p>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {user && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Activity</h2>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Activity Status</p>
-
-                    <p className="mt-2 text-xl font-bold">{activityStatus}</p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Last Activity</p>
-
-                    <p className="mt-2 text-xl font-bold">
-                      {daysSinceLastActivity !== null
-                        ? `${daysSinceLastActivity} days ago`
-                        : "N/A"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-5">
-                    <p className="text-sm text-gray-500">Active Repositories</p>
-
-                    <p className="mt-2 text-xl font-bold">
-                      {recentlyActiveRepositories}
-                    </p>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {bestRepository && (
-              <section className="mt-10">
-                <h2 className="mb-5 text-2xl font-bold">Best Project</h2>
-
-                <div className="rounded-xl border border-gray-200 p-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <a
-                        href={bestRepository.html_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xl font-bold hover:underline"
-                      >
-                        {bestRepository.name}
-                      </a>
-
-                      <p className="mt-2 text-gray-600">
-                        {bestRepository.description ?? "No description"}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0">
-                      <span className="text-2xl font-bold">
-                        {bestRepositoryScore}
-                      </span>
-
-                      <span className="text-gray-500"> points</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-4 text-sm text-gray-600">
-                    {bestRepository.language && (
-                      <span>{bestRepository.language}</span>
-                    )}
-
-                    {bestRepositoryQuality?.hasReadme && <span>README ✓</span>}
-
-                    <span>⭐ {bestRepository.stargazers_count}</span>
-
-                    <span>Forks: {bestRepository.forks_count}</span>
-
-                    <span>
-                      Updated{" "}
-                      {new Date(bestRepository.updated_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </section>
-            )}
+            <BestProject
+              repository={bestRepository}
+              score={bestRepositoryScore}
+              hasReadme={bestRepositoryQuality?.hasReadme ?? false}
+            />
 
             {user && (
               <section className="mt-10">
