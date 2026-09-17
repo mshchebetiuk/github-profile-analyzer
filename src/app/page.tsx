@@ -14,6 +14,10 @@ import ProfileScore from "@/app/components/ProfileScore";
 import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
+import {
+  calculateProfileScore,
+  calculateRepositoryScore,
+} from "@/utils/githubAnalytics";
 
 import type {
   GitHubUser,
@@ -201,49 +205,14 @@ export default function Home() {
             ? "Moderately active"
             : "Inactive";
 
-  const calculateProfileScore = () => {
-    if (!user) return 0;
-
-    let score = 0;
-
-    if (user.name) score += 10;
-    if (user.bio) score += 10;
-
-    if (repositories.length >= 3) score += 10;
-    if (repositories.length >= 5) score += 10;
-
-    const repositoriesWithDescription = repositories.filter(
-      (repository) => repository.description,
-    ).length;
-
-    if (repositories.length > 0) {
-      const descriptionRatio =
-        repositoriesWithDescription / repositories.length;
-
-      if (descriptionRatio >= 0.5) score += 10;
-      if (descriptionRatio >= 0.8) score += 10;
-    }
-
-    if (technologies.length >= 3) score += 10;
-    if (technologies.length >= 5) score += 10;
-
-    if (user.followers >= 1) score += 5;
-    if (user.followers >= 5) score += 5;
-
-    if (totalStars >= 1) score += 5;
-    if (totalStars >= 5) score += 5;
-
-    if (readmePercentage >= 50) score += 5;
-    if (readmePercentage >= 80) score += 5;
-
-    if (daysSinceLastActivity !== null && daysSinceLastActivity <= 30) {
-      score += 5;
-    }
-
-    return Math.min(score, 100);
-  };
-
-  const profileScore = calculateProfileScore();
+  const profileScore = calculateProfileScore({
+    user,
+    repositories,
+    technologies,
+    totalStars,
+    readmePercentage,
+    daysSinceLastActivity,
+  });
 
   const getRecommendations = () => {
     if (!user) return [];
@@ -292,48 +261,27 @@ export default function Home() {
 
   const recommendations = getRecommendations();
 
-  const calculateRepositoryScore = (repository: GitHubRepository) => {
-    let score = 0;
+  const bestRepository =
+    repositories.length > 0
+      ? repositories.reduce((best, repository) => {
+          const currentScore = calculateRepositoryScore(
+            repository,
+            repositoryQuality,
+            currentTime,
+          );
 
-    if (repository.description) score += 10;
-    if (repository.language) score += 10;
+          const bestScore = calculateRepositoryScore(
+            best,
+            repositoryQuality,
+            currentTime,
+          );
 
-    const quality = repositoryQuality.find(
-      (item) => item.repository === repository.name,
-    );
-
-    if (quality?.hasReadme) score += 15;
-
-    score += Math.min(repository.stargazers_count * 2, 20);
-    score += Math.min(repository.forks_count * 2, 10);
-
-    const updatedAt = new Date(repository.updated_at).getTime();
-
-    const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
-
-    if (daysSinceUpdate <= 30) {
-      score += 20;
-    } else if (daysSinceUpdate <= 90) {
-      score += 10;
-    }
-
-    return score;
-  };
-
-  const bestRepository = repositories.reduce<GitHubRepository | null>(
-    (best, repository) => {
-      if (!best) return repository;
-
-      const currentScore = calculateRepositoryScore(repository);
-      const bestScore = calculateRepositoryScore(best);
-
-      return currentScore > bestScore ? repository : best;
-    },
-    null,
-  );
+          return currentScore > bestScore ? repository : best;
+        })
+      : null;
 
   const bestRepositoryScore = bestRepository
-    ? calculateRepositoryScore(bestRepository)
+    ? calculateRepositoryScore(bestRepository, repositoryQuality, currentTime)
     : 0;
 
   const bestRepositoryQuality = bestRepository
