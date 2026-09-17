@@ -14,9 +14,12 @@ import ProfileScore from "@/app/components/ProfileScore";
 import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
+
 import {
   calculateProfileScore,
+  calculateRepositoryInsights,
   calculateRepositoryScore,
+  getRecommendations,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -214,52 +217,14 @@ export default function Home() {
     daysSinceLastActivity,
   });
 
-  const getRecommendations = () => {
-    if (!user) return [];
-
-    const recommendations: string[] = [];
-
-    if (!user.bio) recommendations.push("Add a bio to your GitHub profile.");
-    if (repositories.length < 5)
-      recommendations.push(
-        "Add more public projects to demonstrate your skills.",
-      );
-
-    const repositoriesWithoutDescription = repositories.filter(
-      (repository) => !repository.description,
-    );
-
-    if (repositoriesWithoutDescription.length > 0)
-      recommendations.push(
-        "Add descriptions to repositories that do not have one.",
-      );
-    if (technologies.length < 3)
-      recommendations.push(
-        "Show more technologies across your public projects.",
-      );
-    if (totalStars === 0)
-      recommendations.push(
-        "Improve project presentation to attract more GitHub engagement.",
-      );
-
-    if (recommendations.length === 0) {
-      recommendations.push(
-        "Your GitHub profile is well structured. Keep projects active and updated.",
-      );
-    }
-
-    if (readmePercentage < 80) {
-      recommendations.push("Add README files to more repositories.");
-    }
-
-    if (daysSinceLastActivity !== null && daysSinceLastActivity > 90) {
-      recommendations.push("Update your pubilc project more regularly.");
-    }
-
-    return recommendations;
-  };
-
-  const recommendations = getRecommendations();
+  const recommendations = getRecommendations({
+    user,
+    repositories,
+    technologies,
+    totalStars,
+    readmePercentage,
+    daysSinceLastActivity,
+  });
 
   const bestRepository =
     repositories.length > 0
@@ -301,23 +266,15 @@ export default function Home() {
     }))
     .sort((a, b) => b.count - a.count);
 
-  const averageStars =
-    repositories.length > 0 ? Math.round(totalStars / repositories.length) : 0;
-
-  const averageForks =
-    repositories.length > 0 ? Math.round(totalForks / repositories.length) : 0;
-
-  const repositoriesWithoutDescription = repositories.filter(
-    (repository) => !repository.description,
-  ).length;
-
-  const inactiveRepositories = repositories.filter((repository) => {
-    const updatedAt = new Date(repository.updated_at).getTime();
-
-    const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
-
-    return daysSinceUpdate > 90;
-  }).length;
+  const {
+    averageStars,
+    averageForks,
+    repositoriesWithoutDescription,
+    inactiveRepositories,
+  } = calculateRepositoryInsights({
+    repositories,
+    currentTime,
+  });
 
   const availableLanguages = Array.from(
     new Set(
