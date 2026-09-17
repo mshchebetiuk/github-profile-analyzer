@@ -1,15 +1,6 @@
 import Image from "next/image";
 
-type GitHubUser = {
-  login: string;
-  name: string | null;
-  avatar_url: string;
-  bio: string | null;
-  public_repos: number;
-  followers: number;
-  following: number;
-  html_url: string;
-};
+import type { GitHubUser } from "@/types/github";
 
 type ProfileCardProps = {
   user: GitHubUser;

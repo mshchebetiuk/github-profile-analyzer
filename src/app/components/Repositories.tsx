@@ -1,15 +1,4 @@
-type GitHubRepository = {
-  id: number;
-  name: string;
-  description: string | null;
-  html_url: string;
-  language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  updated_at: string;
-};
-
-type SortBy = "updated" | "stars" | "forks" | "name";
+import type { GitHubRepository, RepositorySort } from "@/types/github";
 
 type RepositoriesProps = {
   repositories: GitHubRepository[];
@@ -19,14 +8,14 @@ type RepositoriesProps = {
 
   repositorySearch: string;
   languageFilter: string;
-  sortBy: SortBy;
+  sortBy: RepositorySort;
 
   hasMoreRepositories: boolean;
   visibleRepositories: number;
 
   onSearchChange: (value: string) => void;
   onLanguageChange: (value: string) => void;
-  onSortChange: (value: SortBy) => void;
+  onSortChange: (value: RepositorySort) => void;
   onReset: () => void;
   onShowMore: () => void;
   onShowLess: () => void;
@@ -77,7 +66,7 @@ export default function Repositories({
 
           <select
             value={sortBy}
-            onChange={(e) => onSortChange(e.target.value as SortBy)}
+            onChange={(e) => onSortChange(e.target.value as RepositorySort)}
             className="rounded-xl border border-gray-200 px-4 py-3"
           >
             <option value="updated">Recently updated</option>

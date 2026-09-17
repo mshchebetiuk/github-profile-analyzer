@@ -1,11 +1,7 @@
-type LanguageStatistics = {
-  language: string;
-  count: number;
-  percentage: number;
-};
+import type { LanguageStatistic } from "@/types/github";
 
 type LanguageStatisticsProps = {
-  statistics: LanguageStatistics[];
+  statistics: LanguageStatistic[];
 };
 
 export default function LanguageStatistics({

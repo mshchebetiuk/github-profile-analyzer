@@ -15,32 +15,12 @@ import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
 
-type GitHubUser = {
-  login: string;
-  name: string | null;
-  avatar_url: string;
-  bio: string | null;
-  public_repos: number;
-  followers: number;
-  following: number;
-  html_url: string;
-};
-
-type GitHubRepository = {
-  id: number;
-  name: string;
-  description: string | null;
-  html_url: string;
-  language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  updated_at: string;
-};
-
-type RepositoryQualityResult = {
-  repository: string;
-  hasReadme: boolean;
-};
+import type {
+  GitHubUser,
+  GitHubRepository,
+  RepositoryQualityResult,
+  RepositorySort,
+} from "@/types/github";
 
 export default function Home() {
   const [username, setUsername] = useState<string>("");
@@ -55,9 +35,7 @@ export default function Home() {
   const [currentTime] = useState(() => Date.now());
   const [repositorySearch, setRepositorySearch] = useState<string>("");
   const [languageFilter, setLanguageFilter] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<"updated" | "stars" | "forks" | "name">(
-    "updated",
-  );
+  const [sortBy, setSortBy] = useState<RepositorySort>("updated");
   const [visibleRepositories, setVisibleRepositories] = useState(6);
   const [compareUsername, setCompareUsername] = useState("");
   const [compareUser, setCompareUser] = useState<GitHubUser | null>(null);
