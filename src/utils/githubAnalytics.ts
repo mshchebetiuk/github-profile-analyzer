@@ -41,6 +41,16 @@ type ActivityAnalytics = {
   activityStatus: string;
 };
 
+type RepositoryQualityAnalytics = {
+  repositoriesWithReadme: number;
+  readmePercentage: number;
+};
+
+type BestRepositoryResult = {
+  repository: GitHubRepository | null;
+  score: number;
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -336,5 +346,64 @@ export const calculateActivityAnalytics = (
     daysSinceLastActivity,
     recentlyActiveRepositories,
     activityStatus,
+  };
+};
+
+export const calculateRepositoryQuality = (
+  repositoryQuality: RepositoryQualityResult[],
+): RepositoryQualityAnalytics => {
+  const repositoriesWithReadme = repositoryQuality.filter(
+    (repository) => repository.hasReadme,
+  ).length;
+
+  const readmePercentage =
+    repositoryQuality.length > 0
+      ? Math.round((repositoriesWithReadme / repositoryQuality.length) * 100)
+      : 0;
+
+  return {
+    repositoriesWithReadme,
+    readmePercentage,
+  };
+};
+
+export const findBestRepository = (
+  repositories: GitHubRepository[],
+  repositoryQuality: RepositoryQualityResult[],
+  currentTime: number,
+): BestRepositoryResult => {
+  if (repositories.length === 0) {
+    return {
+      repository: null,
+      score: 0,
+    };
+  }
+
+  let bestRepository = repositories[0];
+
+  let bestScore = calculateRepositoryScore(
+    bestRepository,
+    repositoryQuality,
+    currentTime,
+  );
+
+  for (let i = 1; i < repositories.length; i++) {
+    const repository = repositories[i];
+
+    const score = calculateRepositoryScore(
+      repository,
+      repositoryQuality,
+      currentTime,
+    );
+
+    if (score > bestScore) {
+      bestRepository = repository;
+      bestScore = score;
+    }
+  }
+
+  return {
+    repository: bestRepository,
+    score: bestScore,
   };
 };

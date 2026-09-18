@@ -21,8 +21,10 @@ import {
   calculateProfileScore,
   calculateRepositoryAnalytics,
   calculateRepositoryInsights,
+  calculateRepositoryQuality,
   calculateRepositoryScore,
   getRecommendations,
+  findBestRepository,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -141,14 +143,8 @@ export default function Home() {
   const { totalStars, totalForks, topLanguage, languagesCount } =
     calculateRepositoryAnalytics(repositories);
 
-  const repositoriesWithReadme = repositoryQuality.filter(
-    (repository) => repository.hasReadme,
-  ).length;
-
-  const readmePercentage =
-    repositoryQuality.length > 0
-      ? Math.round((repositoriesWithReadme / repositoryQuality.length) * 100)
-      : 0;
+  const { repositoriesWithReadme, readmePercentage } =
+    calculateRepositoryQuality(repositoryQuality);
 
   const { daysSinceLastActivity, recentlyActiveRepositories, activityStatus } =
     calculateActivityAnalytics(repositories, currentTime);
@@ -171,28 +167,8 @@ export default function Home() {
     daysSinceLastActivity,
   });
 
-  const bestRepository =
-    repositories.length > 0
-      ? repositories.reduce((best, repository) => {
-          const currentScore = calculateRepositoryScore(
-            repository,
-            repositoryQuality,
-            currentTime,
-          );
-
-          const bestScore = calculateRepositoryScore(
-            best,
-            repositoryQuality,
-            currentTime,
-          );
-
-          return currentScore > bestScore ? repository : best;
-        })
-      : null;
-
-  const bestRepositoryScore = bestRepository
-    ? calculateRepositoryScore(bestRepository, repositoryQuality, currentTime)
-    : 0;
+  const { repository: bestRepository, score: bestRepositoryScore } =
+    findBestRepository(repositories, repositoryQuality, currentTime);
 
   const bestRepositoryQuality = bestRepository
     ? repositoryQuality.find((item) => item.repository === bestRepository.name)
