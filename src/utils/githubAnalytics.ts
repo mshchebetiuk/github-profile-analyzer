@@ -1,8 +1,8 @@
-import RepositoryInsights from "@/app/components/RepositoryInsights";
 import type {
   GitHubUser,
   GitHubRepository,
   RepositoryQualityResult,
+  LanguageStatistic,
 } from "@/types/github";
 
 type ProfileScoreParams = {
@@ -26,6 +26,19 @@ type RecommendationsParams = {
 type RepositoryInsightsParams = {
   repositories: GitHubRepository[];
   currentTime: number;
+};
+
+type RepositoryAnalytics = {
+  totalStars: number;
+  totalForks: number;
+  topLanguage: string;
+  languagesCount: number;
+};
+
+type ActivityAnalytics = {
+  daysSinceLastActivity: number | null;
+  recentlyActiveRepositories: number;
+  activityStatus: string;
 };
 
 export const calculateProfileScore = ({
@@ -209,5 +222,119 @@ export const calculateRepositoryInsights = ({
     averageForks,
     repositoriesWithoutDescription,
     inactiveRepositories,
+  };
+};
+
+export const calculateLanguageStatistics = (
+  repositories: GitHubRepository[],
+): LanguageStatistic[] => {
+  if (repositories.length === 0) return [];
+
+  const languageCount: Record<string, number> = {};
+
+  repositories.forEach((repository) => {
+    if (!repository.language) return;
+
+    languageCount[repository.language] =
+      (languageCount[repository.language] ?? 0) + 1;
+  });
+
+  return Object.entries(languageCount)
+    .map(([language, count]) => ({
+      language,
+      count,
+      percentage: Math.round((count / repositories.length) * 100),
+    }))
+    .sort((a, b) => b.count - a.count);
+};
+
+export const calculateRepositoryAnalytics = (
+  repositories: GitHubRepository[],
+): RepositoryAnalytics => {
+  const totalStars = repositories.reduce(
+    (total, repository) => total + repository.stargazers_count,
+    0,
+  );
+
+  const totalForks = repositories.reduce(
+    (total, repository) => total + repository.forks_count,
+    0,
+  );
+
+  const languageCount: Record<string, number> = {};
+
+  repositories.forEach((repository) => {
+    if (!repository.language) return;
+
+    languageCount[repository.language] =
+      (languageCount[repository.language] ?? 0) + 1;
+  });
+
+  const languages = Object.entries(languageCount);
+
+  const topLanguage =
+    languages.length > 0
+      ? languages.reduce((top, current) =>
+          current[1] > top[1] ? current : top,
+        )[0]
+      : "N/A";
+
+  return {
+    totalStars,
+    totalForks,
+    topLanguage,
+    languagesCount: languages.length,
+  };
+};
+
+export const calculateActivityAnalytics = (
+  repositories: GitHubRepository[],
+  currentTime: number,
+): ActivityAnalytics => {
+  if (repositories.length === 0) {
+    return {
+      daysSinceLastActivity: null,
+      recentlyActiveRepositories: 0,
+      activityStatus: "No activity",
+    };
+  }
+
+  const sortedRepositories = [...repositories].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+  );
+
+  const latesetRepository = sortedRepositories[0];
+
+  const lastActivityDate = new Date(latesetRepository.updated_at).getTime();
+
+  const daysSinceLastActivity = Math.floor(
+    (currentTime - lastActivityDate) / (1000 * 60 * 60 * 24),
+  );
+
+  const recentlyActiveRepositories = repositories.filter((repository) => {
+    const updatedAt = new Date(repository.updated_at).getTime();
+
+    const daysSinceUpdate = Math.floor(
+      (currentTime - updatedAt) / (1000 * 60 * 60 * 24),
+    );
+
+    return daysSinceUpdate <= 30;
+  }).length;
+
+  let activityStatus = "Inactive";
+
+  if (daysSinceLastActivity <= 7) {
+    activityStatus = "Very Active";
+  } else if (daysSinceLastActivity <= 30) {
+    activityStatus = "Active";
+  } else if (daysSinceLastActivity <= 90) {
+    activityStatus = "Moderately Active";
+  }
+
+  return {
+    daysSinceLastActivity,
+    recentlyActiveRepositories,
+    activityStatus,
   };
 };

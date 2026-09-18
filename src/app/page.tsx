@@ -16,7 +16,10 @@ import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
 
 import {
+  calculateActivityAnalytics,
+  calculateLanguageStatistics,
   calculateProfileScore,
+  calculateRepositoryAnalytics,
   calculateRepositoryInsights,
   calculateRepositoryScore,
   getRecommendations,
@@ -135,33 +138,8 @@ export default function Home() {
     }
   };
 
-  const totalStars = repositories.reduce(
-    (total, repository) => total + repository.stargazers_count,
-    0,
-  );
-
-  const totalForks = repositories.reduce(
-    (total, repository) => total + repository.forks_count,
-    0,
-  );
-
-  const languages = repositories
-    .map((repository) => repository.language)
-    .filter((language): language is string => language !== null);
-
-  const uniqueLanguages = new Set(languages);
-
-  const languageCount = languages.reduce<Record<string, number>>(
-    (count, language) => {
-      count[language] = (count[language] ?? 0) + 1;
-
-      return count;
-    },
-    {},
-  );
-
-  const topLanguage =
-    Object.entries(languageCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "N/A";
+  const { totalStars, totalForks, topLanguage, languagesCount } =
+    calculateRepositoryAnalytics(repositories);
 
   const repositoriesWithReadme = repositoryQuality.filter(
     (repository) => repository.hasReadme,
@@ -172,41 +150,8 @@ export default function Home() {
       ? Math.round((repositoriesWithReadme / repositoryQuality.length) * 100)
       : 0;
 
-  const sortedRepositories = [...repositories].sort(
-    (a, b) =>
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-  );
-
-  const latestRepository = sortedRepositories[0];
-
-  const lastActivityDate = latestRepository
-    ? new Date(latestRepository.updated_at)
-    : null;
-
-  const daysSinceLastActivity = lastActivityDate
-    ? Math.floor(
-        (currentTime - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24),
-      )
-    : null;
-
-  const recentlyActiveRepositories = repositories.filter((repository) => {
-    const updatedAt = new Date(repository.updated_at).getTime();
-
-    const daysDifference = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
-
-    return daysDifference <= 30;
-  }).length;
-
-  const activityStatus =
-    daysSinceLastActivity === null
-      ? "No activity"
-      : daysSinceLastActivity <= 7
-        ? "Very active"
-        : daysSinceLastActivity <= 30
-          ? "Active"
-          : daysSinceLastActivity <= 90
-            ? "Moderately active"
-            : "Inactive";
+  const { daysSinceLastActivity, recentlyActiveRepositories, activityStatus } =
+    calculateActivityAnalytics(repositories, currentTime);
 
   const profileScore = calculateProfileScore({
     user,
@@ -253,18 +198,7 @@ export default function Home() {
     ? repositoryQuality.find((item) => item.repository === bestRepository.name)
     : undefined;
 
-  const totalRepositoriesWithLanguage = languages.length;
-
-  const languageStatistics = Object.entries(languageCount)
-    .map(([language, count]) => ({
-      language,
-      count,
-      percentage:
-        totalRepositoriesWithLanguage > 0
-          ? Math.round((count / totalRepositoriesWithLanguage) * 100)
-          : 0,
-    }))
-    .sort((a, b) => b.count - a.count);
+  const languageStatistics = calculateLanguageStatistics(repositories);
 
   const {
     averageStars,
@@ -355,7 +289,7 @@ export default function Home() {
     getMetricWinner(user?.followers ?? 0, compareUser?.followers ?? 0),
     getMetricWinner(totalStars, compareTotalStars),
     getMetricWinner(totalForks, compareTotalForks),
-    getMetricWinner(uniqueLanguages.size, compareLanguage.size),
+    getMetricWinner(languagesCount, compareLanguage.size),
   ];
 
   const primaryWins = comparisonResults.filter(
@@ -438,7 +372,7 @@ export default function Home() {
               compareTotalStars={compareTotalStars}
               totalForks={totalForks}
               compareTotalForks={compareTotalForks}
-              languagesCount={uniqueLanguages.size}
+              languagesCount={languagesCount}
               compareLanguagesCount={compareLanguage.size}
               primaryWins={primaryWins}
               compareWins={compareWins}
@@ -448,7 +382,7 @@ export default function Home() {
               totalStars={totalStars}
               totalForks={totalForks}
               topLanguage={topLanguage}
-              languagesCount={uniqueLanguages.size}
+              languagesCount={languagesCount}
             />
 
             <Technologies technologies={technologies} />
