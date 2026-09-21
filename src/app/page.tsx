@@ -34,6 +34,11 @@ import type {
   RepositorySort,
 } from "@/types/github";
 
+import {
+  filterAndSortRepositories,
+  getAvailableLanguages,
+} from "@/utils/repositoryFilter";
+
 export default function Home() {
   const [username, setUsername] = useState<string>("");
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -186,42 +191,14 @@ export default function Home() {
     currentTime,
   });
 
-  const availableLanguages = Array.from(
-    new Set(
-      repositories
-        .map((repository) => repository.language)
-        .filter((language): language is string => Boolean(language)),
-    ),
-  ).sort();
+  const availableLanguages = getAvailableLanguages(repositories);
 
-  const filteredRepositories = repositories
-    .filter((repository) => {
-      const matchesSearch = repository.name
-        .toLowerCase()
-        .includes(repositorySearch.toLowerCase());
-
-      const matchesLanguage =
-        languageFilter === "All" || repository.language === languageFilter;
-
-      return matchesSearch && matchesLanguage;
-    })
-    .sort((a, b) => {
-      if (sortBy === "stars") {
-        return b.stargazers_count - a.stargazers_count;
-      }
-
-      if (sortBy === "forks") {
-        return b.forks_count - a.forks_count;
-      }
-
-      if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
-      }
-
-      return (
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-    });
+  const filteredRepositories = filterAndSortRepositories({
+    repositories,
+    search: repositorySearch,
+    language: languageFilter,
+    sortBy,
+  });
 
   const displayedRepositories = filteredRepositories.slice(
     0,
