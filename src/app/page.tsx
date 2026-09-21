@@ -15,6 +15,7 @@ import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
 import { paginateRepositories } from "@/utils/repositoryPagination";
+import { fetchGitHubProfile } from "@/services/githubService";
 
 import {
   calculateActivityAnalytics,
@@ -38,7 +39,6 @@ import type {
 import {
   filterAndSortRepositories,
   getAvailableLanguages,
-  hasActiveRepositoryFilter,
 } from "@/utils/repositoryFilter";
 
 export default function Home() {
@@ -67,81 +67,57 @@ export default function Home() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedUsername = username.trim();
-
-    if (!trimmedUsername) return;
+    if (!username.trim()) {
+      setError("Please enter a GitHub username.");
+      return;
+    }
 
     try {
       setLoading(true);
       setError("");
-      setUser(null);
 
+      const data = await fetchGitHubProfile(username);
+
+      setUser(data.user);
+      setRepositories(data.repositories);
+      setTechnologies(data.technologies);
+      setRepositoryQuality(data.repositoryQuality);
+      setVisibleRepositories(6);
+    } catch (error) {
+      setUser(null);
       setRepositories([]);
       setTechnologies([]);
       setRepositoryQuality([]);
-      setVisibleRepositories(6);
 
-      const response = await fetch(
-        `/api/github?username=${encodeURIComponent(trimmedUsername)}`,
+      setError(
+        error instanceof Error ? error.message : "Something went wrong.",
       );
-
-      const data = await response.json();
-      const repositoryQualityData: RepositoryQualityResult[] =
-        data.repositoryQuality;
-
-      if (!response.ok)
-        throw new Error(data.message ?? "Failed to analyze GitHub profile");
-
-      const userData: GitHubUser = data.user;
-      const repositoriesData: GitHubRepository[] = data.repositories;
-      const technologiesData: string[] = data.technologies;
-
-      setUser(userData);
-      setRepositories(repositoriesData);
-      setTechnologies(technologiesData);
-      setRepositoryQuality(repositoryQualityData);
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Something went wrong");
-      }
     } finally {
       setLoading(false);
     }
-
-    console.log("GitHub username:", trimmedUsername);
   };
 
   const handleCompare = async () => {
-    const trimmedUsername = compareUsername.trim();
-
-    if (!trimmedUsername) return;
+    if (!compareUsername.trim()) {
+      setCompareError("Please enter a GitHub username.");
+      return;
+    }
 
     try {
       setCompareLoading(true);
       setCompareError("");
-      setCompareUser(null);
-      setCompareRepositories([]);
 
-      const response = await fetch(
-        `/api/github?username=${encodeURIComponent(trimmedUsername)}`,
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message ?? "Failed to load comparison profile");
-      }
+      const data = await fetchGitHubProfile(compareUsername);
 
       setCompareUser(data.user);
       setCompareRepositories(data.repositories);
     } catch (error) {
-      if (error instanceof Error) {
-        setCompareError(error.message);
-      } else {
-        setCompareError("Something went wrong");
-      }
+      setCompareUser(null);
+      setCompareRepositories([]);
+
+      setCompareError(
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
     } finally {
       setCompareLoading(false);
     }
@@ -201,12 +177,6 @@ export default function Home() {
     language: languageFilter,
     sortBy,
   });
-
-  const hasActiveFilters = hasActiveRepositoryFilter(
-    repositorySearch,
-    languageFilter,
-    sortBy,
-  );
 
   const { displayedRepositories, hasMoreRepositories } = paginateRepositories({
     repositories: filteredRepositories,
