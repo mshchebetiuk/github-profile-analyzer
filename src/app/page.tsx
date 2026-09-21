@@ -18,11 +18,11 @@ import Repositories from "@/app/components/Repositories";
 import {
   calculateActivityAnalytics,
   calculateLanguageStatistics,
+  calculateProfileComparison,
   calculateProfileScore,
   calculateRepositoryAnalytics,
   calculateRepositoryInsights,
   calculateRepositoryQuality,
-  calculateRepositoryScore,
   getRecommendations,
   findBestRepository,
 } from "@/utils/githubAnalytics";
@@ -237,44 +237,21 @@ export default function Home() {
     setVisibleRepositories(6);
   };
 
-  const compareTotalStars = compareRepositories.reduce(
-    (total, repository) => total + repository.stargazers_count,
-    0,
-  );
-
-  const compareTotalForks = compareRepositories.reduce(
-    (total, repository) => total + repository.forks_count,
-    0,
-  );
-
-  const compareLanguage = new Set(
-    compareRepositories
-      .map((repository) => repository.language)
-      .filter((language): language is string => language !== null),
-  );
-
-  const getMetricWinner = (primaryValue: number, compareValue: number) => {
-    if (primaryValue > compareValue) return "primary";
-    if (compareValue > primaryValue) return "compare";
-
-    return "draw";
-  };
-
-  const comparisonResults = [
-    getMetricWinner(repositories.length, compareRepositories.length),
-    getMetricWinner(user?.followers ?? 0, compareUser?.followers ?? 0),
-    getMetricWinner(totalStars, compareTotalStars),
-    getMetricWinner(totalForks, compareTotalForks),
-    getMetricWinner(languagesCount, compareLanguage.size),
-  ];
-
-  const primaryWins = comparisonResults.filter(
-    (result) => result === "primary",
-  ).length;
-
-  const compareWins = comparisonResults.filter(
-    (result) => result === "compare",
-  ).length;
+  const {
+    compareTotalStars,
+    compareTotalForks,
+    compareLanguagesCount,
+    primaryWins,
+    compareWins,
+  } = calculateProfileComparison({
+    primaryRepositories: repositories,
+    compareRepositories,
+    primaryFollowers: user?.followers ?? 0,
+    compareFollowers: compareUser?.followers ?? 0,
+    primaryTotalStars: totalStars,
+    primaryTotalForks: totalForks,
+    primaryLanguagesCount: languagesCount,
+  });
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -349,7 +326,7 @@ export default function Home() {
               totalForks={totalForks}
               compareTotalForks={compareTotalForks}
               languagesCount={languagesCount}
-              compareLanguagesCount={compareLanguage.size}
+              compareLanguagesCount={compareLanguagesCount}
               primaryWins={primaryWins}
               compareWins={compareWins}
             />

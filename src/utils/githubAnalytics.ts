@@ -51,6 +51,24 @@ type BestRepositoryResult = {
   score: number;
 };
 
+type ProfileComparisonAnalytics = {
+  compareTotalStars: number;
+  compareTotalForks: number;
+  compareLanguagesCount: number;
+  primaryWins: number;
+  compareWins: number;
+};
+
+type ProfileComparisonParams = {
+  primaryRepositories: GitHubRepository[];
+  compareRepositories: GitHubRepository[];
+  primaryFollowers: number;
+  compareFollowers: number;
+  primaryTotalStars: number;
+  primaryTotalForks: number;
+  primaryLanguagesCount: number;
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -405,5 +423,59 @@ export const findBestRepository = (
   return {
     repository: bestRepository,
     score: bestScore,
+  };
+};
+
+export const calculateProfileComparison = ({
+  primaryRepositories,
+  compareRepositories,
+  primaryFollowers,
+  compareFollowers,
+  primaryTotalStars,
+  primaryTotalForks,
+  primaryLanguagesCount,
+}: ProfileComparisonParams): ProfileComparisonAnalytics => {
+  const compareTotalStars = compareRepositories.reduce(
+    (total, repository) => total + repository.stargazers_count,
+    0,
+  );
+
+  const compareTotalForks = compareRepositories.reduce(
+    (total, repository) => total + repository.forks_count,
+    0,
+  );
+
+  const compareLanguages = new Set(
+    compareRepositories
+      .map((repository) => repository.language)
+      .filter((language): language is string => language !== null),
+  );
+
+  const compareLanguagesCount = compareLanguages.size;
+
+  const getWinner = (primaryValue: number, compareValue: number) => {
+    if (primaryValue > compareValue) return "primary";
+    if (compareValue > primaryValue) return "compare";
+
+    return "draw";
+  };
+
+  const results = [
+    getWinner(primaryRepositories.length, compareRepositories.length),
+    getWinner(primaryFollowers, compareFollowers),
+    getWinner(primaryTotalStars, compareTotalStars),
+    getWinner(primaryTotalForks, compareTotalForks),
+    getWinner(primaryLanguagesCount, compareLanguagesCount),
+  ];
+
+  const primaryWins = results.filter((result) => result === "primary").length;
+  const compareWins = results.filter((result) => result === "compare").length;
+
+  return {
+    compareTotalStars,
+    compareTotalForks,
+    compareLanguagesCount,
+    primaryWins,
+    compareWins,
   };
 };
