@@ -14,6 +14,7 @@ import ProfileScore from "@/app/components/ProfileScore";
 import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
+import { paginateRepositories } from "@/utils/repositoryPagination";
 
 import {
   calculateActivityAnalytics,
@@ -37,6 +38,7 @@ import type {
 import {
   filterAndSortRepositories,
   getAvailableLanguages,
+  hasActiveRepositoryFilter,
 } from "@/utils/repositoryFilter";
 
 export default function Home() {
@@ -200,12 +202,16 @@ export default function Home() {
     sortBy,
   });
 
-  const displayedRepositories = filteredRepositories.slice(
-    0,
-    visibleRepositories,
+  const hasActiveFilters = hasActiveRepositoryFilter(
+    repositorySearch,
+    languageFilter,
+    sortBy,
   );
 
-  const hasMoreRepositories = visibleRepositories < filteredRepositories.length;
+  const { displayedRepositories, hasMoreRepositories } = paginateRepositories({
+    repositories: filteredRepositories,
+    visibleCount: visibleRepositories,
+  });
 
   const resetRepositoryFilters = () => {
     setRepositorySearch("");

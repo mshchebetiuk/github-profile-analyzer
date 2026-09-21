@@ -58,3 +58,11 @@ export const filterAndSortRepositories = ({
       }
     });
 };
+
+export const hasActiveRepositoryFilter = (
+  search: string,
+  language: string,
+  sortBy: RepositorySort,
+): boolean => {
+  return search.trim() !== "" || language !== "All" || sortBy !== "updated";
+};
