@@ -14,9 +14,9 @@ import ProfileScore from "@/app/components/ProfileScore";
 import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
-import { paginateRepositories } from "@/utils/repositoryPagination";
 import { useGitHubProfile } from "@/hooks/useGitHubProfile";
 import { useGitHubComparison } from "@/hooks/useGitHubComparison";
+import { useRepositoryFilters } from "@/hooks/useRepositoryFilters";
 
 import {
   calculateActivityAnalytics,
@@ -30,19 +30,8 @@ import {
   findBestRepository,
 } from "@/utils/githubAnalytics";
 
-import type { RepositorySort } from "@/types/github";
-
-import {
-  filterAndSortRepositories,
-  getAvailableLanguages,
-} from "@/utils/repositoryFilter";
-
 export default function Home() {
   const [currentTime] = useState(() => Date.now());
-  const [repositorySearch, setRepositorySearch] = useState<string>("");
-  const [languageFilter, setLanguageFilter] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<RepositorySort>("updated");
-  const [visibleRepositories, setVisibleRepositories] = useState(6);
 
   const {
     username,
@@ -65,6 +54,23 @@ export default function Home() {
     compareError,
     handleCompare,
   } = useGitHubComparison();
+
+  const {
+    repositorySearch,
+    setRepositorySearch,
+    languageFilter,
+    setLanguageFilter,
+    sortBy,
+    setSortBy,
+    visibleRepositories,
+    availableLanguages,
+    filteredRepositories,
+    displayedRepositories,
+    hasMoreRepositories,
+    resetRepositoryFilters,
+    showMoreRepositories,
+    showLessRepositories,
+  } = useRepositoryFilters(repositories);
 
   const { totalStars, totalForks, topLanguage, languagesCount } =
     calculateRepositoryAnalytics(repositories);
@@ -111,27 +117,6 @@ export default function Home() {
     repositories,
     currentTime,
   });
-
-  const availableLanguages = getAvailableLanguages(repositories);
-
-  const filteredRepositories = filterAndSortRepositories({
-    repositories,
-    search: repositorySearch,
-    language: languageFilter,
-    sortBy,
-  });
-
-  const { displayedRepositories, hasMoreRepositories } = paginateRepositories({
-    repositories: filteredRepositories,
-    visibleCount: visibleRepositories,
-  });
-
-  const resetRepositoryFilters = () => {
-    setRepositorySearch("");
-    setLanguageFilter("All");
-    setSortBy("updated");
-    setVisibleRepositories(6);
-  };
 
   const {
     compareTotalStars,
@@ -281,10 +266,8 @@ export default function Home() {
               onLanguageChange={setLanguageFilter}
               onSortChange={setSortBy}
               onReset={resetRepositoryFilters}
-              onShowMore={() =>
-                setVisibleRepositories((current) => current + 6)
-              }
-              onShowLess={() => setVisibleRepositories(6)}
+              onShowMore={showMoreRepositories}
+              onShowLess={showLessRepositories}
             />
           </>
         )}
