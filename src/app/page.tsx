@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 
 import ProfileCard from "@/app/components/ProfileCard";
 import Analytics from "@/app/components/Analytics";
@@ -15,7 +15,8 @@ import Recommendations from "@/app/components/Recommendations";
 import ProfileComparison from "@/app/components/ProfileComparison";
 import Repositories from "@/app/components/Repositories";
 import { paginateRepositories } from "@/utils/repositoryPagination";
-import { fetchGitHubProfile } from "@/services/githubService";
+import { useGitHubProfile } from "@/hooks/useGitHubProfile";
+import { useGitHubComparison } from "@/hooks/useGitHubComparison";
 
 import {
   calculateActivityAnalytics,
@@ -29,12 +30,7 @@ import {
   findBestRepository,
 } from "@/utils/githubAnalytics";
 
-import type {
-  GitHubUser,
-  GitHubRepository,
-  RepositoryQualityResult,
-  RepositorySort,
-} from "@/types/github";
+import type { RepositorySort } from "@/types/github";
 
 import {
   filterAndSortRepositories,
@@ -42,86 +38,33 @@ import {
 } from "@/utils/repositoryFilter";
 
 export default function Home() {
-  const [username, setUsername] = useState<string>("");
-  const [user, setUser] = useState<GitHubUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
-  const [technologies, setTechnologies] = useState<string[]>([]);
-  const [repositoryQuality, setRepositoryQuality] = useState<
-    RepositoryQualityResult[]
-  >([]);
   const [currentTime] = useState(() => Date.now());
   const [repositorySearch, setRepositorySearch] = useState<string>("");
   const [languageFilter, setLanguageFilter] = useState<string>("All");
   const [sortBy, setSortBy] = useState<RepositorySort>("updated");
   const [visibleRepositories, setVisibleRepositories] = useState(6);
-  const [compareUsername, setCompareUsername] = useState("");
-  const [compareUser, setCompareUser] = useState<GitHubUser | null>(null);
-  const [compareRepositories, setCompareRepositories] = useState<
-    GitHubRepository[]
-  >([]);
-  const [compareLoading, setCompareLoading] = useState(false);
-  const [compareError, setCompareError] = useState("");
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    username,
+    setUsername,
+    user,
+    repositories,
+    technologies,
+    repositoryQuality,
+    loading,
+    error,
+    handleSubmit,
+  } = useGitHubProfile();
 
-    if (!username.trim()) {
-      setError("Please enter a GitHub username.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      const data = await fetchGitHubProfile(username);
-
-      setUser(data.user);
-      setRepositories(data.repositories);
-      setTechnologies(data.technologies);
-      setRepositoryQuality(data.repositoryQuality);
-      setVisibleRepositories(6);
-    } catch (error) {
-      setUser(null);
-      setRepositories([]);
-      setTechnologies([]);
-      setRepositoryQuality([]);
-
-      setError(
-        error instanceof Error ? error.message : "Something went wrong.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCompare = async () => {
-    if (!compareUsername.trim()) {
-      setCompareError("Please enter a GitHub username.");
-      return;
-    }
-
-    try {
-      setCompareLoading(true);
-      setCompareError("");
-
-      const data = await fetchGitHubProfile(compareUsername);
-
-      setCompareUser(data.user);
-      setCompareRepositories(data.repositories);
-    } catch (error) {
-      setCompareUser(null);
-      setCompareRepositories([]);
-
-      setCompareError(
-        error instanceof Error ? error.message : "Something went wrong.",
-      );
-    } finally {
-      setCompareLoading(false);
-    }
-  };
+  const {
+    compareUsername,
+    setCompareUsername,
+    compareUser,
+    compareRepositories,
+    compareLoading,
+    compareError,
+    handleCompare,
+  } = useGitHubComparison();
 
   const { totalStars, totalForks, topLanguage, languagesCount } =
     calculateRepositoryAnalytics(repositories);
