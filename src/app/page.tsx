@@ -17,8 +17,6 @@ import { useGitHubComparison } from "@/hooks/useGitHubComparison";
 import { useRepositoryFilters } from "@/hooks/useRepositoryFilters";
 import { useGitHubAnalytics } from "@/hooks/useGitHubAnalytics";
 
-import { calculateProfileComparison } from "@/utils/githubAnalytics";
-
 export default function Home() {
   const {
     username,
@@ -31,16 +29,6 @@ export default function Home() {
     error,
     handleSubmit,
   } = useGitHubProfile();
-
-  const {
-    compareUsername,
-    setCompareUsername,
-    compareUser,
-    compareRepositories,
-    compareLoading,
-    compareError,
-    handleCompare,
-  } = useGitHubComparison();
 
   const {
     totalStars,
@@ -67,6 +55,27 @@ export default function Home() {
   });
 
   const {
+    compareUsername,
+    setCompareUsername,
+    compareUser,
+    compareRepositories,
+    compareLoading,
+    compareError,
+    handleCompare,
+    compareTotalStars,
+    compareTotalForks,
+    compareLanguagesCount,
+    primaryWins,
+    compareWins,
+  } = useGitHubComparison({
+    primaryRepositories: repositories,
+    primaryFollowers: user?.followers ?? 0,
+    primaryTotalStars: totalStars,
+    primaryTotalForks: totalForks,
+    primaryLanguagesCount: languagesCount,
+  });
+
+  const {
     repositorySearch,
     setRepositorySearch,
     languageFilter,
@@ -82,22 +91,6 @@ export default function Home() {
     showMoreRepositories,
     showLessRepositories,
   } = useRepositoryFilters(repositories);
-
-  const {
-    compareTotalStars,
-    compareTotalForks,
-    compareLanguagesCount,
-    primaryWins,
-    compareWins,
-  } = calculateProfileComparison({
-    primaryRepositories: repositories,
-    compareRepositories,
-    primaryFollowers: user?.followers ?? 0,
-    compareFollowers: compareUser?.followers ?? 0,
-    primaryTotalStars: totalStars,
-    primaryTotalForks: totalForks,
-    primaryLanguagesCount: languagesCount,
-  });
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">

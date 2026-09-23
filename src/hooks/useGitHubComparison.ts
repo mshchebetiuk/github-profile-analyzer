@@ -1,11 +1,27 @@
 "use client";
 
 import { useState } from "react";
+
 import { fetchGitHubProfile } from "@/services/githubService";
+import { calculateProfileComparison } from "@/utils/githubAnalytics";
 
 import type { GitHubRepository, GitHubUser } from "@/types/github";
 
-export const useGitHubComparison = () => {
+type UseGitHubComparisonParams = {
+  primaryRepositories: GitHubRepository[];
+  primaryFollowers: number;
+  primaryTotalStars: number;
+  primaryTotalForks: number;
+  primaryLanguagesCount: number;
+};
+
+export const useGitHubComparison = ({
+  primaryRepositories,
+  primaryFollowers,
+  primaryTotalStars,
+  primaryTotalForks,
+  primaryLanguagesCount,
+}: UseGitHubComparisonParams) => {
   const [compareUsername, setCompareUsername] = useState("");
   const [compareUser, setCompareUser] = useState<GitHubUser | null>(null);
   const [compareRepositories, setCompareRepositories] = useState<
@@ -41,6 +57,22 @@ export const useGitHubComparison = () => {
     }
   };
 
+  const {
+    compareTotalStars,
+    compareTotalForks,
+    compareLanguagesCount,
+    primaryWins,
+    compareWins,
+  } = calculateProfileComparison({
+    primaryRepositories,
+    compareRepositories,
+    primaryFollowers,
+    compareFollowers: compareUser?.followers ?? 0,
+    primaryTotalStars,
+    primaryTotalForks,
+    primaryLanguagesCount,
+  });
+
   return {
     compareUsername,
     setCompareUsername,
@@ -49,5 +81,10 @@ export const useGitHubComparison = () => {
     compareLoading,
     compareError,
     handleCompare,
+    compareTotalStars,
+    compareTotalForks,
+    compareLanguagesCount,
+    primaryWins,
+    compareWins,
   };
 };
