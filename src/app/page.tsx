@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import ProfileCard from "@/app/components/ProfileCard";
 import Analytics from "@/app/components/Analytics";
 import Technologies from "@/app/components/Technologies";
@@ -17,22 +15,11 @@ import Repositories from "@/app/components/Repositories";
 import { useGitHubProfile } from "@/hooks/useGitHubProfile";
 import { useGitHubComparison } from "@/hooks/useGitHubComparison";
 import { useRepositoryFilters } from "@/hooks/useRepositoryFilters";
+import { useGitHubAnalytics } from "@/hooks/useGitHubAnalytics";
 
-import {
-  calculateActivityAnalytics,
-  calculateLanguageStatistics,
-  calculateProfileComparison,
-  calculateProfileScore,
-  calculateRepositoryAnalytics,
-  calculateRepositoryInsights,
-  calculateRepositoryQuality,
-  getRecommendations,
-  findBestRepository,
-} from "@/utils/githubAnalytics";
+import { calculateProfileComparison } from "@/utils/githubAnalytics";
 
 export default function Home() {
-  const [currentTime] = useState(() => Date.now());
-
   const {
     username,
     setUsername,
@@ -56,6 +43,30 @@ export default function Home() {
   } = useGitHubComparison();
 
   const {
+    totalStars,
+    totalForks,
+    topLanguage,
+    languagesCount,
+    repositoriesWithReadme,
+    readmePercentage,
+    daysSinceLastActivity,
+    recentlyActiveRepositories,
+    activityStatus,
+    profileScore,
+    recommendations,
+    bestRepository,
+    bestRepositoryScore,
+    bestRepositoryQuality,
+    languageStatistics,
+    repositoryInsights,
+  } = useGitHubAnalytics({
+    user,
+    repositories,
+    technologies,
+    repositoryQuality,
+  });
+
+  const {
     repositorySearch,
     setRepositorySearch,
     languageFilter,
@@ -71,52 +82,6 @@ export default function Home() {
     showMoreRepositories,
     showLessRepositories,
   } = useRepositoryFilters(repositories);
-
-  const { totalStars, totalForks, topLanguage, languagesCount } =
-    calculateRepositoryAnalytics(repositories);
-
-  const { repositoriesWithReadme, readmePercentage } =
-    calculateRepositoryQuality(repositoryQuality);
-
-  const { daysSinceLastActivity, recentlyActiveRepositories, activityStatus } =
-    calculateActivityAnalytics(repositories, currentTime);
-
-  const profileScore = calculateProfileScore({
-    user,
-    repositories,
-    technologies,
-    totalStars,
-    readmePercentage,
-    daysSinceLastActivity,
-  });
-
-  const recommendations = getRecommendations({
-    user,
-    repositories,
-    technologies,
-    totalStars,
-    readmePercentage,
-    daysSinceLastActivity,
-  });
-
-  const { repository: bestRepository, score: bestRepositoryScore } =
-    findBestRepository(repositories, repositoryQuality, currentTime);
-
-  const bestRepositoryQuality = bestRepository
-    ? repositoryQuality.find((item) => item.repository === bestRepository.name)
-    : undefined;
-
-  const languageStatistics = calculateLanguageStatistics(repositories);
-
-  const {
-    averageStars,
-    averageForks,
-    repositoriesWithoutDescription,
-    inactiveRepositories,
-  } = calculateRepositoryInsights({
-    repositories,
-    currentTime,
-  });
 
   const {
     compareTotalStars,
@@ -224,10 +189,12 @@ export default function Home() {
             <LanguageStatistics statistics={languageStatistics} />
 
             <RepositoryInsights
-              averageStars={averageStars}
-              averageForks={averageForks}
-              repositoriesWithoutDescription={repositoriesWithoutDescription}
-              inactiveRepositories={inactiveRepositories}
+              averageStars={repositoryInsights.averageStars}
+              averageForks={repositoryInsights.averageForks}
+              repositoriesWithoutDescription={
+                repositoryInsights.repositoriesWithoutDescription
+              }
+              inactiveRepositories={repositoryInsights.inactiveRepositories}
             />
 
             <RepositoryQuality
