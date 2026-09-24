@@ -16,6 +16,8 @@ import { useGitHubProfile } from "@/hooks/useGitHubProfile";
 import { useGitHubComparison } from "@/hooks/useGitHubComparison";
 import { useRepositoryFilters } from "@/hooks/useRepositoryFilters";
 import { useGitHubAnalytics } from "@/hooks/useGitHubAnalytics";
+import LoadingState from "@/app/components/LoadingState";
+import ErrorState from "@/app/components/ErrorState";
 
 export default function Home() {
   const {
@@ -149,9 +151,10 @@ export default function Home() {
           </div>
         </div>
 
-        {error && <p className="mt-6 text-center text-red-600">{error}</p>}
+        {error && <ErrorState message={error} />}
+        {loading && <LoadingState />}
 
-        {user && (
+        {user && !loading && (
           <>
             <ProfileCard user={user} />
 
