@@ -33,6 +33,11 @@ export const useGitHubProfile = () => {
       setLoading(true);
       setError("");
 
+      setUser(null);
+      setRepositories([]);
+      setTechnologies([]);
+      setRepositoryQuality([]);
+
       const data = await fetchGitHubProfile(username);
 
       setUser(data.user);
@@ -53,6 +58,15 @@ export const useGitHubProfile = () => {
     }
   };
 
+  const resetProfile = () => {
+    setUsername("");
+    setUser(null);
+    setRepositories([]);
+    setTechnologies([]);
+    setRepositoryQuality([]);
+    setError("");
+  };
+
   return {
     username,
     setUsername,
@@ -63,5 +77,6 @@ export const useGitHubProfile = () => {
     loading,
     error,
     handleSubmit,
+    resetProfile,
   };
 };

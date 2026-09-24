@@ -18,6 +18,7 @@ import { useRepositoryFilters } from "@/hooks/useRepositoryFilters";
 import { useGitHubAnalytics } from "@/hooks/useGitHubAnalytics";
 import LoadingState from "@/app/components/LoadingState";
 import ErrorState from "@/app/components/ErrorState";
+import InitialState from "@/app/components/InitialState";
 
 export default function Home() {
   const {
@@ -30,6 +31,7 @@ export default function Home() {
     loading,
     error,
     handleSubmit,
+    resetProfile,
   } = useGitHubProfile();
 
   const {
@@ -123,6 +125,17 @@ export default function Home() {
             >
               {loading ? "Analyzing..." : "Analyze"}
             </button>
+
+            {(user || error) && (
+              <button
+                type="button"
+                onClick={resetProfile}
+                disabled={loading}
+                className="rounded-xl border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Clear
+              </button>
+            )}
           </form>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -151,6 +164,7 @@ export default function Home() {
           </div>
         </div>
 
+        {!user && !loading && !error && <InitialState />}
         {error && <ErrorState message={error} />}
         {loading && <LoadingState />}
 
