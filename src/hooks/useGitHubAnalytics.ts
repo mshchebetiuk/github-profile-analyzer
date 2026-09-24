@@ -8,6 +8,7 @@ import {
   calculateRepositoryInsights,
   calculateRepositoryQuality,
   findBestRepository,
+  getTopRepositories,
   getRecommendations,
 } from "@/utils/githubAnalytics";
 
@@ -68,6 +69,12 @@ export const useGitHubAnalytics = ({
       )
     : undefined;
 
+  const topRepositories = getTopRepositories(
+    repositories,
+    repositoryQuality,
+    currentTime,
+  );
+
   const languageStatistics = calculateLanguageStatistics(repositories);
 
   const repositoryInsights = calculateRepositoryInsights({
@@ -93,5 +100,6 @@ export const useGitHubAnalytics = ({
     bestRepositoryQuality,
     languageStatistics,
     repositoryInsights,
+    topRepositories,
   };
 };

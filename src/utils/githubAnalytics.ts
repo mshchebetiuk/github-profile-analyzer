@@ -479,3 +479,31 @@ export const calculateProfileComparison = ({
     compareWins,
   };
 };
+
+export const getTopRepositories = (
+  repositories: GitHubRepository[],
+  repositoryQuality: RepositoryQualityResult[],
+  currentTime: number,
+  limit = 3,
+) => {
+  return repositories
+    .map((repository) => {
+      const score = calculateRepositoryScore(
+        repository,
+        repositoryQuality,
+        currentTime,
+      );
+
+      const quality = repositoryQuality.find(
+        (item) => item.repository === repository.name,
+      );
+
+      return {
+        repository,
+        score,
+        hasReadme: quality?.hasReadme ?? false,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+};

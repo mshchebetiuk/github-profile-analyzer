@@ -5,6 +5,7 @@ import {
   calculateRepositoryAnalytics,
   calculateRepositoryQuality,
   calculateProfileScore,
+  getTopRepositories,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -263,5 +264,115 @@ describe("calculateProfileScore", () => {
     });
 
     expect(result).toBe(100);
+  });
+});
+
+describe("getTopRepositories", () => {
+  const currentTime = new Date("2026-09-24T12:00:00Z").getTime();
+
+  const repositories: GitHubRepository[] = [
+    {
+      id: 1,
+      name: "strong-project",
+      description: "Strong project",
+      html_url: "https://github.com/test/strong-project",
+      language: "TypeScript",
+      stargazers_count: 10,
+      forks_count: 5,
+      updated_at: "2026-09-20T12:00:00Z",
+    },
+    {
+      id: 2,
+      name: "medium-project",
+      description: "Medium project",
+      html_url: "https://github.com/test/medium-project",
+      language: "JavaScript",
+      stargazers_count: 2,
+      forks_count: 1,
+      updated_at: "2026-09-10T12:00:00Z",
+    },
+    {
+      id: 3,
+      name: "weak-project",
+      description: "Weak project",
+      html_url: "https://github.com/test/weak-project",
+      language: null,
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: "2025-01-01T12:00:00Z",
+    },
+  ];
+
+  const repositoryQuality = [
+    {
+      repository: "strong-project",
+      hasReadme: true,
+    },
+    {
+      repository: "medium-project",
+      hasReadme: true,
+    },
+    {
+      repository: "weak-project",
+      hasReadme: false,
+    },
+  ];
+
+  it("sorts repositories by score from highest to lowest", () => {
+    const result = getTopRepositories(
+      repositories,
+      repositoryQuality,
+      currentTime,
+    );
+
+    expect(result).toHaveLength(3);
+
+    expect(result[0].repository.name).toBe("strong-project");
+
+    expect(result[1].repository.name).toBe("medium-project");
+
+    expect(result[2].repository.name).toBe("weak-project");
+
+    expect(result[0].score).toBeGreaterThanOrEqual(result[1].score);
+
+    expect(result[1].score).toBeGreaterThanOrEqual(result[2].score);
+  });
+
+  it("respects the repository limit", () => {
+    const result = getTopRepositories(
+      repositories,
+      repositoryQuality,
+      currentTime,
+      2,
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result[0].repository.name).toBe("strong-project");
+    expect(result[1].repository.name).toBe("medium-project");
+  });
+
+  it("returns an empty array when there are no repositories", () => {
+    const result = getTopRepositories([], [], currentTime);
+
+    expect(result).toEqual([]);
+  });
+
+  it("includes README information", () => {
+    const result = getTopRepositories(
+      repositories,
+      repositoryQuality,
+      currentTime,
+    );
+
+    const strongProject = result.find(
+      (item) => item.repository.name === "strong-project",
+    );
+
+    const weakProject = result.find(
+      (item) => item.repository.name === "weak-project",
+    );
+
+    expect(strongProject?.hasReadme).toBe(true);
+    expect(weakProject?.hasReadme).toBe(false);
   });
 });

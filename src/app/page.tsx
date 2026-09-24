@@ -19,6 +19,7 @@ import { useGitHubAnalytics } from "@/hooks/useGitHubAnalytics";
 import LoadingState from "@/app/components/LoadingState";
 import ErrorState from "@/app/components/ErrorState";
 import InitialState from "@/app/components/InitialState";
+import TopRepositories from "@/app/components/TopRepositories";
 
 export default function Home() {
   const {
@@ -49,6 +50,7 @@ export default function Home() {
     bestRepository,
     bestRepositoryScore,
     bestRepositoryQuality,
+    topRepositories,
     languageStatistics,
     repositoryInsights,
   } = useGitHubAnalytics({
@@ -224,6 +226,8 @@ export default function Home() {
               score={bestRepositoryScore}
               hasReadme={bestRepositoryQuality?.hasReadme ?? false}
             />
+
+            <TopRepositories repositories={topRepositories} />
 
             <ProfileScore score={profileScore} />
 
