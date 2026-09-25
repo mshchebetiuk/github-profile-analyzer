@@ -7,6 +7,7 @@ import {
   calculateRepositoryHealth,
   calculateProfileScore,
   getTopRepositories,
+  generateProfileSummary,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -492,5 +493,104 @@ describe("calculateRepositoryHealth", () => {
       repositoriesWithoutReadme: 0,
       repositoriesWithoutDescription: 0,
     });
+  });
+});
+
+describe("generateProfileSummary", () => {
+  it("generates strengths for a strong profile", () => {
+    const bestRepository: GitHubRepository = {
+      id: 1,
+      name: "github-profile-analyzer",
+      description: "GitHub profile analytics application",
+      html_url: "https://github.com/github-profile-analyzer",
+      language: "TypeScript",
+      stargazers_count: 10,
+      forks_count: 3,
+      updated_at: "2026-09-24T12:00:00Z",
+    };
+
+    const result = generateProfileSummary({
+      topLanguage: "TypeScript",
+      technologies: [
+        "React",
+        "Next.js",
+        "TypeScript",
+        "Tailwind CSS",
+        "Vitest",
+      ],
+      profileScore: 90,
+      healthScore: 100,
+      bestRepository,
+      daysSinceLastActivity: 1,
+      repositoriesWithoutReadme: 0,
+      repositoriesWithoutDescription: 0,
+    });
+
+    expect(result.primaryLanguage).toBe("TypeScript");
+    expect(result.technologiesCount).toBe(5);
+    expect(result.profileScore).toBe(90);
+    expect(result.healthScore).toBe(100);
+    expect(result.bestProject).toBe("github-profile-analyzer");
+
+    expect(result.strengths).toContain("Active repository maintenance");
+    expect(result.strengths).toContain("Good README coverage");
+    expect(result.strengths).toContain("All repositories have descriptions");
+    expect(result.strengths).toContain("Diverse technology stack");
+    expect(result.strengths).toContain("Strong overall profile completeness");
+    expect(result.strengths).toContain("Strong repository health");
+
+    expect(result.improvements).toEqual([]);
+  });
+
+  it("generates improvements for a weaker profile", () => {
+    const result = generateProfileSummary({
+      topLanguage: "JavaScript",
+      technologies: ["React", "JavaScript"],
+      profileScore: 45,
+      healthScore: 40,
+      bestRepository: null,
+      daysSinceLastActivity: 120,
+      repositoriesWithoutReadme: 2,
+      repositoriesWithoutDescription: 3,
+    });
+
+    expect(result.primaryLanguage).toBe("JavaScript");
+    expect(result.technologiesCount).toBe(2);
+    expect(result.bestProject).toBeNull();
+
+    expect(result.improvements).toContain("Update repositories more regularly");
+    expect(result.improvements).toContain("Add README files to 2 repositories");
+    expect(result.improvements).toContain("Add descriptions to 3 repositories");
+    expect(result.improvements).toContain(
+      "Show a broader technology stack in public projects",
+    );
+    expect(result.strengths).not.toContain(
+      "Strong overall profile completeness",
+    );
+    expect(result.strengths).not.toContain("Strong repository health");
+  });
+
+  it("handles a minimal profile", () => {
+    const result = generateProfileSummary({
+      topLanguage: null,
+      technologies: [],
+      profileScore: 0,
+      healthScore: 0,
+      bestRepository: null,
+      daysSinceLastActivity: null,
+      repositoriesWithoutReadme: 0,
+      repositoriesWithoutDescription: 0,
+    });
+
+    expect(result.primaryLanguage).toBe("Unknown");
+    expect(result.technologiesCount).toBe(0);
+    expect(result.profileScore).toBe(0);
+    expect(result.healthScore).toBe(0);
+    expect(result.bestProject).toBeNull();
+
+    expect(result.improvements).toContain("Update repositories more regularly");
+    expect(result.improvements).toContain(
+      "Show a broader technology stack in public projects",
+    );
   });
 });

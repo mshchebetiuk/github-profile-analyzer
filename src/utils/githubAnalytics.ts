@@ -75,6 +75,27 @@ type RepositoryHealthParams = {
   currentTime: number;
 };
 
+type ProfileSummaryParams = {
+  topLanguage: string | null;
+  technologies: string[];
+  profileScore: number;
+  healthScore: number;
+  bestRepository: GitHubRepository | null;
+  daysSinceLastActivity: number | null;
+  repositoriesWithoutReadme: number;
+  repositoriesWithoutDescription: number;
+};
+
+type ProfileSummary = {
+  primaryLanguage: string;
+  technologiesCount: number;
+  profileScore: number;
+  healthScore: number;
+  bestProject: string | null;
+  strengths: string[];
+  improvements: string[];
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -569,5 +590,64 @@ export const calculateRepositoryHealth = ({
     staleRepositories,
     repositoriesWithoutReadme,
     repositoriesWithoutDescription,
+  };
+};
+
+export const generateProfileSummary = ({
+  topLanguage,
+  technologies,
+  profileScore,
+  healthScore,
+  bestRepository,
+  daysSinceLastActivity,
+  repositoriesWithoutReadme,
+  repositoriesWithoutDescription,
+}: ProfileSummaryParams): ProfileSummary => {
+  const strengths: string[] = [];
+  const improvements: string[] = [];
+
+  if (daysSinceLastActivity !== null && daysSinceLastActivity <= 30) {
+    strengths.push("Active repository maintenance");
+  } else {
+    improvements.push("Update repositories more regularly");
+  }
+
+  if (repositoriesWithoutReadme === 0) {
+    strengths.push("Good README coverage");
+  } else {
+    improvements.push(
+      `Add README files to ${repositoriesWithoutReadme} ${
+        repositoriesWithoutReadme === 1 ? "repository" : "repositories"
+      }`,
+    );
+  }
+
+  if (repositoriesWithoutDescription === 0) {
+    strengths.push("All repositories have descriptions");
+  } else {
+    improvements.push(
+      `Add descriptions to ${repositoriesWithoutDescription} ${
+        repositoriesWithoutDescription === 1 ? "repository" : "repositories"
+      }`,
+    );
+  }
+
+  if (technologies.length >= 5) {
+    strengths.push("Diverse technology stack");
+  } else {
+    improvements.push("Show a broader technology stack in public projects");
+  }
+
+  if (profileScore >= 80) strengths.push("Strong overall profile completeness");
+  if (healthScore >= 80) strengths.push("Strong repository health");
+
+  return {
+    primaryLanguage: topLanguage ?? "Unknown",
+    technologiesCount: technologies.length,
+    profileScore,
+    healthScore,
+    bestProject: bestRepository?.name ?? null,
+    strengths,
+    improvements,
   };
 };

@@ -21,6 +21,7 @@ import ErrorState from "@/app/components/ErrorState";
 import InitialState from "@/app/components/InitialState";
 import TopRepositories from "@/app/components/TopRepositories";
 import RepositoryHealth from "@/app/components/RepositoryHealth";
+import ProfileSummary from "@/app/components/ProfileSummary";
 
 export default function Home() {
   const {
@@ -55,6 +56,7 @@ export default function Home() {
     languageStatistics,
     repositoryInsights,
     repositoryHealth,
+    profileSummary,
   } = useGitHubAnalytics({
     user,
     repositories,
@@ -222,6 +224,8 @@ export default function Home() {
                 repositoryHealth.repositoriesWithoutDescription
               }
             />
+
+            <ProfileSummary summary={profileSummary} />
 
             <RepositoryQuality
               repositoriesWithReadme={repositoriesWithReadme}

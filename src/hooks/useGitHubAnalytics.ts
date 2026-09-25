@@ -11,6 +11,7 @@ import {
   findBestRepository,
   getTopRepositories,
   getRecommendations,
+  generateProfileSummary,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -89,6 +90,18 @@ export const useGitHubAnalytics = ({
     currentTime,
   });
 
+  const profileSummary = generateProfileSummary({
+    topLanguage,
+    technologies,
+    profileScore,
+    healthScore: repositoryHealth.healthScore,
+    bestRepository,
+    daysSinceLastActivity,
+    repositoriesWithoutReadme: repositoryHealth.repositoriesWithoutReadme,
+    repositoriesWithoutDescription:
+      repositoryHealth.repositoriesWithoutDescription,
+  });
+
   return {
     currentTime,
     totalStars,
@@ -109,5 +122,6 @@ export const useGitHubAnalytics = ({
     repositoryInsights,
     topRepositories,
     repositoryHealth,
+    profileSummary,
   };
 };
