@@ -69,6 +69,12 @@ type ProfileComparisonParams = {
   primaryLanguagesCount: number;
 };
 
+type RepositoryHealthParams = {
+  repositories: GitHubRepository[];
+  repositoryQuality: RepositoryQualityResult[];
+  currentTime: number;
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -506,4 +512,62 @@ export const getTopRepositories = (
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+};
+
+export const calculateRepositoryHealth = ({
+  repositories,
+  repositoryQuality,
+  currentTime,
+}: RepositoryHealthParams) => {
+  if (repositories.length === 0) {
+    return {
+      healthScore: 0,
+      activeRepositories: 0,
+      staleRepositories: 0,
+      repositoriesWithoutReadme: 0,
+      repositoriesWithoutDescription: 0,
+    };
+  }
+
+  const ninetyDaysInMilliseconds = 90 * 24 * 60 * 60 * 1000;
+
+  const activeRepositories = repositories.filter((repository) => {
+    const updatedAt = new Date(repository.updated_at).getTime();
+
+    return currentTime - updatedAt <= ninetyDaysInMilliseconds;
+  }).length;
+
+  const staleRepositories = repositories.length - activeRepositories;
+
+  const repositoriesWithoutReadme = repositoryQuality.filter(
+    (repository) => !repository.hasReadme,
+  ).length;
+
+  const repositoriesWithoutDescription = repositories.filter(
+    (repository) => !repository.description,
+  ).length;
+
+  const activeRatio = activeRepositories / repositories.length;
+
+  const descriptionRatio =
+    (repositories.length - repositoriesWithoutDescription) /
+    repositories.length;
+
+  const readmeRatio =
+    repositoryQuality.length > 0
+      ? (repositoryQuality.length - repositoriesWithoutReadme) /
+        repositoryQuality.length
+      : 0;
+
+  const healthScore = Math.round(
+    activeRatio * 40 + descriptionRatio * 30 + readmeRatio * 30,
+  );
+
+  return {
+    healthScore,
+    activeRepositories,
+    staleRepositories,
+    repositoriesWithoutReadme,
+    repositoriesWithoutDescription,
+  };
 };

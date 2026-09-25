@@ -20,6 +20,7 @@ import LoadingState from "@/app/components/LoadingState";
 import ErrorState from "@/app/components/ErrorState";
 import InitialState from "@/app/components/InitialState";
 import TopRepositories from "@/app/components/TopRepositories";
+import RepositoryHealth from "@/app/components/RepositoryHealth";
 
 export default function Home() {
   const {
@@ -53,6 +54,7 @@ export default function Home() {
     topRepositories,
     languageStatistics,
     repositoryInsights,
+    repositoryHealth,
   } = useGitHubAnalytics({
     user,
     repositories,
@@ -207,6 +209,18 @@ export default function Home() {
                 repositoryInsights.repositoriesWithoutDescription
               }
               inactiveRepositories={repositoryInsights.inactiveRepositories}
+            />
+
+            <RepositoryHealth
+              healthScore={repositoryHealth.healthScore}
+              activeRepositories={repositoryHealth.activeRepositories}
+              staleRepositories={repositoryHealth.staleRepositories}
+              repositoriesWithoutReadme={
+                repositoryHealth.repositoriesWithoutReadme
+              }
+              repositoriesWithoutDescription={
+                repositoryHealth.repositoriesWithoutDescription
+              }
             />
 
             <RepositoryQuality

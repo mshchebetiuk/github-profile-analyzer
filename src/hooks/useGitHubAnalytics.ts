@@ -7,6 +7,7 @@ import {
   calculateRepositoryAnalytics,
   calculateRepositoryInsights,
   calculateRepositoryQuality,
+  calculateRepositoryHealth,
   findBestRepository,
   getTopRepositories,
   getRecommendations,
@@ -82,6 +83,12 @@ export const useGitHubAnalytics = ({
     currentTime,
   });
 
+  const repositoryHealth = calculateRepositoryHealth({
+    repositories,
+    repositoryQuality,
+    currentTime,
+  });
+
   return {
     currentTime,
     totalStars,
@@ -101,5 +108,6 @@ export const useGitHubAnalytics = ({
     languageStatistics,
     repositoryInsights,
     topRepositories,
+    repositoryHealth,
   };
 };

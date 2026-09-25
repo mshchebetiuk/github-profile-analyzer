@@ -4,6 +4,7 @@ import {
   calculateActivityAnalytics,
   calculateRepositoryAnalytics,
   calculateRepositoryQuality,
+  calculateRepositoryHealth,
   calculateProfileScore,
   getTopRepositories,
 } from "./githubAnalytics";
@@ -374,5 +375,122 @@ describe("getTopRepositories", () => {
 
     expect(strongProject?.hasReadme).toBe(true);
     expect(weakProject?.hasReadme).toBe(false);
+  });
+});
+
+describe("calculateRepositoryHealth", () => {
+  const currentTime = new Date("2026-09-25T12:00:00Z").getTime();
+
+  it("calculates repository health correctly", () => {
+    const repositories: GitHubRepository[] = [
+      {
+        id: 1,
+        name: "active-project",
+        description: "Active project",
+        html_url: "https://github.com/test/active-project",
+        language: "TypeScript",
+        stargazers_count: 5,
+        forks_count: 1,
+        updated_at: "2026-09-20T12:00:00Z",
+      },
+      {
+        id: 2,
+        name: "stale-project",
+        description: null,
+        html_url: "https://github.com/test/stale-project",
+        language: "JavaScript",
+        stargazers_count: 0,
+        forks_count: 0,
+        updated_at: "2025-01-01T12:00:00Z",
+      },
+    ];
+
+    const repositoryQuality = [
+      {
+        repository: "active-project",
+        hasReadme: true,
+      },
+      {
+        repository: "stale-project",
+        hasReadme: false,
+      },
+    ];
+
+    const result = calculateRepositoryHealth({
+      repositories,
+      repositoryQuality,
+      currentTime,
+    });
+
+    expect(result.activeRepositories).toBe(1);
+    expect(result.staleRepositories).toBe(1);
+    expect(result.repositoriesWithoutReadme).toBe(1);
+    expect(result.repositoriesWithoutDescription).toBe(1);
+
+    expect(result.healthScore).toBe(50);
+  });
+
+  it("returns 100 for a fully healthy repositories profile", () => {
+    const repositories: GitHubRepository[] = [
+      {
+        id: 1,
+        name: "project-one",
+        description: "Project one",
+        html_url: "https://github.com/test/project-one",
+        language: "TypeScript",
+        stargazers_count: 5,
+        forks_count: 1,
+        updated_at: "2026-09-24T12:00:00Z",
+      },
+      {
+        id: 2,
+        name: "project-two",
+        description: "Project two",
+        html_url: "https://github.com/test/project-two",
+        language: "JavaScript",
+        stargazers_count: 3,
+        forks_count: 1,
+        updated_at: "2026-09-23T12:00:00Z",
+      },
+    ];
+
+    const repositoryQuality = [
+      {
+        repository: "project-one",
+        hasReadme: true,
+      },
+      {
+        repository: "project-two",
+        hasReadme: true,
+      },
+    ];
+
+    const result = calculateRepositoryHealth({
+      repositories,
+      repositoryQuality,
+      currentTime,
+    });
+
+    expect(result.healthScore).toBe(100);
+    expect(result.activeRepositories).toBe(2);
+    expect(result.staleRepositories).toBe(0);
+    expect(result.repositoriesWithoutReadme).toBe(0);
+    expect(result.repositoriesWithoutDescription).toBe(0);
+  });
+
+  it("handles an empty repository list", () => {
+    const result = calculateRepositoryHealth({
+      repositories: [],
+      repositoryQuality: [],
+      currentTime,
+    });
+
+    expect(result).toEqual({
+      healthScore: 0,
+      activeRepositories: 0,
+      staleRepositories: 0,
+      repositoriesWithoutReadme: 0,
+      repositoriesWithoutDescription: 0,
+    });
   });
 });
