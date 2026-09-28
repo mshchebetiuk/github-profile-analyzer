@@ -18,6 +18,10 @@ type RepositoryQuality = {
   hasReadme: boolean;
 };
 
+type GitHubErrorPayload = {
+  message?: string;
+};
+
 async function detectTechnologies(
   username: string,
   repositories: GitHubRepository[],
@@ -93,6 +97,49 @@ async function analyzeRepositoryQuality(
   return results;
 }
 
+class GitHubApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+
+    this.name = "GitHubApiError";
+    this.status = status;
+  }
+}
+
+const fetchGitHub = async (url: string, headers: HeadersInit) => {
+  const response = await fetch(url, {
+    headers,
+  });
+
+  if (response.ok) return response;
+
+  const data = (await response.json().catch(() => ({}))) as GitHubErrorPayload;
+  const remaining = response.headers.get("x-ratelimit-remaining");
+  const reset = response.headers.get("x-ratelimit-reset");
+
+  if (response.status === 403 && remaining === "0") {
+    const resetAt = reset ? new Date(Number(reset) * 1000).toISOString() : null;
+
+    throw new GitHubApiError(
+      resetAt
+        ? `GitHub API rate limit exceeded. Try again after ${resetAt}`
+        : "GitHub API rate limit exceeded. Try again later.",
+      429,
+    );
+  }
+
+  if (response.status === 404) {
+    throw new GitHubApiError("GitHub user not found.", 404);
+  }
+
+  throw new GitHubApiError(
+    data.message ?? `GitHub API request failed with status ${response.status}.`,
+    500,
+  );
+};
+
 export async function GET(request: NextRequest) {
   const username = request.nextUrl.searchParams.get("username");
 
@@ -113,38 +160,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const userResponse = await fetch(
+    const userResponse = await fetchGitHub(
       `https://api.github.com/users/${username}`,
-      { headers },
+      headers,
     );
-
-    if (userResponse.status === 404) {
-      return NextResponse.json(
-        { message: "GitHub user not found" },
-        { status: 404 },
-      );
-    }
-
-    if (!userResponse.ok) {
-      return NextResponse.json(
-        { message: "Failed to load GitHub user" },
-        { status: userResponse.status },
-      );
-    }
 
     const user = await userResponse.json();
 
-    const repositoriesResponse = await fetch(
+    const repositoriesResponse = await fetchGitHub(
       `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=100`,
-      { headers },
+      headers,
     );
-
-    if (!repositoriesResponse.ok) {
-      return NextResponse.json(
-        { message: "Failed to load repositories" },
-        { status: repositoriesResponse.status },
-      );
-    }
 
     const repositories = await repositoriesResponse.json();
 
@@ -166,7 +192,14 @@ export async function GET(request: NextRequest) {
       technologies,
       repositoryQuality,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof GitHubApiError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
+    }
+
     return NextResponse.json(
       { message: "Something went wrong" },
       { status: 500 },
