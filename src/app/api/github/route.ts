@@ -53,8 +53,9 @@ async function detectTechnologies(
 
       if ("@prisma/client" in dependencies || "prisma" in dependencies)
         technologies.add("Prisma");
-      if ("zod" in technologies) technologies.add("Zod");
-      if ("tailwind" in technologies) technologies.add("Tailwind CSS");
+      if ("zod" in dependencies) technologies.add("Zod");
+      if ("tailwind" in dependencies || "@tailwindcss/postcss" in dependencies)
+        technologies.add("Tailwind CSS");
 
       if ("@tanstack/react-query" in dependencies)
         technologies.add("TanStack Query");
