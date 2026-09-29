@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import ProfileCard from "@/app/components/ProfileCard";
 import Analytics from "@/app/components/Analytics";
 import Technologies from "@/app/components/Technologies";
@@ -22,8 +24,13 @@ import InitialState from "@/app/components/InitialState";
 import TopRepositories from "@/app/components/TopRepositories";
 import RepositoryHealth from "@/app/components/RepositoryHealth";
 import ProfileSummary from "@/app/components/ProfileSummary";
+import RepositoryDetails from "@/app/components/RepositoryDetails";
 
 export default function Home() {
+  const [selectedRepositoryId, setSelectedRepositoryId] = useState<
+    number | null
+  >(null);
+
   const {
     username,
     setUsername,
@@ -63,6 +70,10 @@ export default function Home() {
     technologies,
     repositoryQuality,
   });
+
+  const selectedRepository = topRepositories.find(
+    ({ repository }) => repository.id === selectedRepositoryId,
+  );
 
   const {
     compareUsername,
@@ -245,7 +256,19 @@ export default function Home() {
               hasReadme={bestRepositoryQuality?.hasReadme ?? false}
             />
 
-            <TopRepositories repositories={topRepositories} />
+            <TopRepositories
+              repositories={topRepositories}
+              onAnalyze={setSelectedRepositoryId}
+            />
+
+            {selectedRepository && (
+              <RepositoryDetails
+                repository={selectedRepository.repository}
+                score={selectedRepository.score}
+                hasReadme={selectedRepository.hasReadme}
+                onClose={() => setSelectedRepositoryId(null)}
+              />
+            )}
 
             <ProfileScore score={profileScore} />
 

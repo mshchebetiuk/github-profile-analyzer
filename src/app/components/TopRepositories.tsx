@@ -8,10 +8,12 @@ type TopRepository = {
 
 type TopRepositoriesProps = {
   repositories: TopRepository[];
+  onAnalyze: (repositoryId: number) => void;
 };
 
 export default function TopRepositories({
   repositories,
+  onAnalyze,
 }: TopRepositoriesProps) {
   if (repositories.length === 0) return null;
 
@@ -65,6 +67,14 @@ export default function TopRepositories({
             <p className="mt-4 text-sm text-gray-500">
               README: {hasReadme ? "Yes" : "No"}
             </p>
+
+            <button
+              type="button"
+              onClick={() => onAnalyze(repository.id)}
+              className="mt-4 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+            >
+              Analyze
+            </button>
           </article>
         ))}
       </div>
