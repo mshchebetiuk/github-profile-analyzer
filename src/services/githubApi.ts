@@ -18,6 +18,10 @@ type RepositoryQuality = {
   hasReadme: boolean;
 };
 
+type FetchGitHubOptions = {
+  allowNotFound?: boolean;
+};
+
 export class GitHubApiError extends Error {
   status: number;
 
@@ -29,9 +33,16 @@ export class GitHubApiError extends Error {
   }
 }
 
-export const fetchGitHub = async (url: string, headers: HeadersInit) => {
+export const fetchGitHub = async (
+  url: string,
+  headers: HeadersInit,
+  options: FetchGitHubOptions = {},
+) => {
   const response = await fetch(url, {
     headers,
+    next: {
+      revalidate: 300,
+    },
   });
 
   if (response.ok) return response;
@@ -49,6 +60,10 @@ export const fetchGitHub = async (url: string, headers: HeadersInit) => {
         : "GitHub API rate limit exceeded. Try again later.",
       429,
     );
+  }
+
+  if (response.status === 404 && options.allowNotFound) {
+    return response;
   }
 
   if (response.status === 404) {
@@ -70,9 +85,12 @@ export const detectTechnologies = async (
 
   for (const repository of repositories.slice(0, 10)) {
     try {
-      const response = await fetch(
+      const response = await fetchGitHub(
         `https://api.github.com/repos/${username}/${repository.name}/contents/package.json`,
-        { headers },
+        headers,
+        {
+          allowNotFound: true,
+        },
       );
 
       if (!response.ok) continue;
@@ -138,9 +156,12 @@ export const analyzeRepositoryQuality = async (
 
   for (const repository of repositories.slice(0, 10)) {
     try {
-      const response = await fetch(
+      const response = await fetchGitHub(
         `https://api.github.com/repos/${username}/${repository.name}/readme`,
-        { headers },
+        headers,
+        {
+          allowNotFound: true,
+        },
       );
 
       results.push({
