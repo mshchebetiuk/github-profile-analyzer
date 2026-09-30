@@ -12,6 +12,7 @@ import {
   getTopRepositories,
   getRecommendations,
   generateProfileSummary,
+  calculateRepositoryScore,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -34,6 +35,24 @@ export const useGitHubAnalytics = ({
   repositoryQuality,
 }: UseGitHubAnalyticsParams) => {
   const [currentTime] = useState(() => Date.now());
+
+  const getRepositoryAnalysis = (repository: GitHubRepository) => {
+    const score = calculateRepositoryScore(
+      repository,
+      repositoryQuality,
+      currentTime,
+    );
+
+    const quality = repositoryQuality.find(
+      (item) => item.repository === repository.name,
+    );
+
+    return {
+      repository,
+      score,
+      hasReadme: quality?.hasReadme ?? false,
+    };
+  };
 
   const { totalStars, totalForks, topLanguage, languagesCount } =
     calculateRepositoryAnalytics(repositories);
@@ -123,5 +142,6 @@ export const useGitHubAnalytics = ({
     topRepositories,
     repositoryHealth,
     profileSummary,
+    getRepositoryAnalysis,
   };
 };

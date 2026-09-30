@@ -60,6 +60,7 @@ export default function Home() {
     bestRepositoryScore,
     bestRepositoryQuality,
     topRepositories,
+    getRepositoryAnalysis,
     languageStatistics,
     repositoryInsights,
     repositoryHealth,
@@ -71,9 +72,13 @@ export default function Home() {
     repositoryQuality,
   });
 
-  const selectedRepository = topRepositories.find(
-    ({ repository }) => repository.id === selectedRepositoryId,
+  const selectedRepository = repositories.find(
+    (repository) => repository.id === selectedRepositoryId,
   );
+
+  const selectedRepositoryAnalysis = selectedRepository
+    ? getRepositoryAnalysis(selectedRepository)
+    : null;
 
   const {
     compareUsername,
@@ -261,11 +266,11 @@ export default function Home() {
               onAnalyze={setSelectedRepositoryId}
             />
 
-            {selectedRepository && (
+            {selectedRepositoryAnalysis && (
               <RepositoryDetails
-                repository={selectedRepository.repository}
-                score={selectedRepository.score}
-                hasReadme={selectedRepository.hasReadme}
+                repository={selectedRepositoryAnalysis.repository}
+                score={selectedRepositoryAnalysis.score}
+                hasReadme={selectedRepositoryAnalysis.hasReadme}
                 onClose={() => setSelectedRepositoryId(null)}
               />
             )}
@@ -290,6 +295,7 @@ export default function Home() {
               onReset={resetRepositoryFilters}
               onShowMore={showMoreRepositories}
               onShowLess={showLessRepositories}
+              onAnalyze={setSelectedRepositoryId}
             />
           </>
         )}

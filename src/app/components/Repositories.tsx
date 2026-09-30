@@ -19,6 +19,7 @@ type RepositoriesProps = {
   onReset: () => void;
   onShowMore: () => void;
   onShowLess: () => void;
+  onAnalyze: (repositoryId: number) => void;
 };
 
 export default function Repositories({
@@ -37,6 +38,7 @@ export default function Repositories({
   onReset,
   onShowMore,
   onShowLess,
+  onAnalyze,
 }: RepositoriesProps) {
   return (
     <>
@@ -133,6 +135,14 @@ export default function Repositories({
                   Updated:{" "}
                   {new Date(repository.updated_at).toLocaleDateString()}
                 </span>
+
+                <button
+                  type="button"
+                  onClick={() => onAnalyze(repository.id)}
+                  className="mt-4 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+                >
+                  Analyze
+                </button>
               </article>
             ))}
           </div>
