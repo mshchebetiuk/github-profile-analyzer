@@ -5,14 +5,35 @@ type RepositoryDetailsProps = {
   score: number;
   hasReadme: boolean;
   onClose: () => void;
+  breakdown: ScoreBreakdown;
+};
+
+type ScoreBreakdown = {
+  readme: number;
+  description: number;
+  language: number;
+  stars: number;
+  forks: number;
+  activity: number;
+  total: number;
 };
 
 export default function RepositoryDetails({
   repository,
   score,
   hasReadme,
+  breakdown,
   onClose,
 }: RepositoryDetailsProps) {
+  const metrics = [
+    { label: "README", value: breakdown.readme, max: 20 },
+    { label: "Description", value: breakdown.description, max: 10 },
+    { label: "Language", value: breakdown.language, max: 10 },
+    { label: "Stars", value: breakdown.stars, max: 20 },
+    { label: "Forks", value: breakdown.forks, max: 20 },
+    { label: "Activity", value: breakdown.activity, max: 20 },
+  ];
+
   return (
     <section className="mt-8 rounded-xl border border-gray-200 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -68,6 +89,34 @@ export default function RepositoryDetails({
         <span className="rounded-full bg-gray-100 px-3 py-1 text-sm">
           Updated {new Date(repository.updated_at).toLocaleDateString()}
         </span>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold">Score Breakdown</h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          How the repository score is calculated.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          {metrics.map((metric) => (
+            <div key={metric.label}>
+              <div className="mb-2 flex justify-between text-sm">
+                <span>{metric.label}</span>
+                <span className="font-medium">
+                  {metric.value}/{metric.max}
+                </span>
+              </div>
+
+              <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-green-600 transition-all"
+                  style={{ width: `${(metric.value / metric.max) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <a

@@ -651,3 +651,36 @@ export const generateProfileSummary = ({
     improvements,
   };
 };
+
+export const getRepositoryScoreBreakdown = (
+  repository: GitHubRepository,
+  repositoryQuality: RepositoryQualityResult[],
+  currentTime: number,
+) => {
+  const hasReadme = repositoryQuality.some(
+    (item) => item.repository === repository.name && item.hasReadme,
+  );
+
+  const updatedAt = new Date(repository.updated_at).getTime();
+
+  const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+  const activityScore =
+    daysSinceUpdate <= 30 ? 20 : daysSinceUpdate <= 90 ? 10 : 0;
+
+  const breakdown = {
+    readme: hasReadme ? 20 : 0,
+    description: repository.description ? 10 : 0,
+    language: repository.language ? 10 : 0,
+    stars: Math.min(repository.stargazers_count * 2, 20),
+    forks: Math.min(repository.forks_count * 2, 20),
+    activity: activityScore,
+  };
+
+  const total = Object.values(breakdown).reduce((sum, value) => sum + value, 0);
+
+  return {
+    ...breakdown,
+    total,
+  };
+};

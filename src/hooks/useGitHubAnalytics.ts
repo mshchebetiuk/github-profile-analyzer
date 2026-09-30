@@ -12,7 +12,7 @@ import {
   getTopRepositories,
   getRecommendations,
   generateProfileSummary,
-  calculateRepositoryScore,
+  getRepositoryScoreBreakdown,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -37,7 +37,7 @@ export const useGitHubAnalytics = ({
   const [currentTime] = useState(() => Date.now());
 
   const getRepositoryAnalysis = (repository: GitHubRepository) => {
-    const score = calculateRepositoryScore(
+    const breakdown = getRepositoryScoreBreakdown(
       repository,
       repositoryQuality,
       currentTime,
@@ -49,8 +49,9 @@ export const useGitHubAnalytics = ({
 
     return {
       repository,
-      score,
+      score: breakdown.total,
       hasReadme: quality?.hasReadme ?? false,
+      breakdown,
     };
   };
 

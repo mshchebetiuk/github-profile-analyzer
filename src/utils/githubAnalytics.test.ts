@@ -8,6 +8,7 @@ import {
   calculateProfileScore,
   getTopRepositories,
   generateProfileSummary,
+  getRepositoryScoreBreakdown,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -592,5 +593,114 @@ describe("generateProfileSummary", () => {
     expect(result.improvements).toContain(
       "Show a broader technology stack in public projects",
     );
+  });
+});
+
+describe("getRepositoryScoreBreakdown", () => {
+  it("calculates repository score breakdown", () => {
+    const currentTime = new Date("2026-09-30T12:00:00Z").getTime();
+
+    const repository = {
+      id: 1,
+      name: "test-project",
+      description: "Test repository",
+      html_url: "https://githubcom/test/test-project",
+      language: "TypeScript",
+      stargazers_count: 5,
+      forks_count: 2,
+      updated_at: "2026-09-29T12:00:00Z",
+    };
+
+    const result = getRepositoryScoreBreakdown(
+      repository,
+      [
+        {
+          repository: "test-project",
+          hasReadme: true,
+        },
+      ],
+      currentTime,
+    );
+
+    expect(result).toEqual({
+      readme: 20,
+      description: 10,
+      language: 10,
+      stars: 10,
+      forks: 4,
+      activity: 20,
+      total: 74,
+    });
+  });
+
+  it("returns maximum score for a complete repository", () => {
+    const currentTime = new Date("2026-09-30T12:00:00Z").getTime();
+
+    const repository = {
+      id: 1,
+      name: "complate-project",
+      description: "Complate project",
+      html_url: "https://github.com/test/complate-project",
+      language: "TypeScript",
+      stargazers_count: 10,
+      forks_count: 10,
+      updated_at: "2026-09-29T12:00:00Z",
+    };
+
+    const result = getRepositoryScoreBreakdown(
+      repository,
+      [{ repository: "complate-project", hasReadme: true }],
+      currentTime,
+    );
+
+    expect(result.total).toBe(100);
+  });
+
+  it("returns zero for an incomplete inactive repository", () => {
+    const currentTime = new Date("2026-09-30T12:00:00Z").getTime();
+
+    const repository = {
+      id: 2,
+      name: "empty-project",
+      description: null,
+      html_url: "https://github.com/test/empty-project",
+      language: null,
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: "2025-01-01T12:00:00Z",
+    };
+
+    const result = getRepositoryScoreBreakdown(
+      repository,
+      [{ repository: "empty-project", hasReadme: false }],
+      currentTime,
+    );
+
+    expect(result.total).toBe(0);
+  });
+
+  it("does not award activity points to stale repositories", () => {
+    const currentTime = new Date("2026-09-30T12:00:00Z").getTime();
+
+    const repository = {
+      id: 3,
+      name: "old-project",
+      description: "Old project",
+      html_url: "https://github.com/test/old-project",
+      language: "JavaScript",
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: "2026-01-01T12:00:00Z",
+    };
+
+    const result = getRepositoryScoreBreakdown(
+      repository,
+      [{ repository: "old-project", hasReadme: false }],
+      currentTime,
+    );
+
+    expect(result.activity).toBe(0);
+    expect(result.readme).toBe(0);
+    expect(result.total).toBe(20);
   });
 });
