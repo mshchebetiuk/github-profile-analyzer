@@ -52,6 +52,7 @@ export const useGitHubAnalytics = ({
       score: breakdown.total,
       hasReadme: quality?.hasReadme ?? false,
       breakdown,
+      readmeAnalysis: quality ?? null,
     };
   };
 

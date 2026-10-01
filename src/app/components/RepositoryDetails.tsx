@@ -1,4 +1,4 @@
-import type { GitHubRepository } from "@/types/github";
+import type { GitHubRepository, RepositoryQualityResult } from "@/types/github";
 
 type RepositoryDetailsProps = {
   repository: GitHubRepository;
@@ -6,6 +6,7 @@ type RepositoryDetailsProps = {
   hasReadme: boolean;
   onClose: () => void;
   breakdown: ScoreBreakdown;
+  readmeAnalysis: RepositoryQualityResult | null;
 };
 
 type ScoreBreakdown = {
@@ -23,6 +24,7 @@ export default function RepositoryDetails({
   score,
   hasReadme,
   breakdown,
+  readmeAnalysis,
   onClose,
 }: RepositoryDetailsProps) {
   const metrics = [
@@ -118,6 +120,70 @@ export default function RepositoryDetails({
           ))}
         </div>
       </div>
+
+      {readmeAnalysis && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-semibold">README Quality</h3>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Documentation quality based on README structure.
+              </p>
+            </div>
+
+            <span className="text-xl font-bold">
+              {readmeAnalysis.readmeScore}/100
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                label: "README",
+                passed: readmeAnalysis.hasReadme,
+              },
+              {
+                label: "Description",
+                passed: readmeAnalysis.hasDescription,
+              },
+              {
+                label: "Installation",
+                passed: readmeAnalysis.hasInstallation,
+              },
+              {
+                label: "Usage",
+                passed: readmeAnalysis.hasUsage,
+              },
+              {
+                label: "Technologies",
+                passed: readmeAnalysis.hasTechnologies,
+              },
+              {
+                label: "License",
+                passed: readmeAnalysis.hasLicense,
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between rounded-lg bg-gray-50 p-3"
+              >
+                <span className="text-sm">{item.label}</span>
+
+                <span
+                  className={
+                    item.passed
+                      ? "font-medium text-green-600"
+                      : "font-medium text-gray-400"
+                  }
+                >
+                  {item.passed ? "✓ Found" : "Missing"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <a
         href={repository.html_url}

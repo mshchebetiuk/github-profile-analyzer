@@ -1,4 +1,5 @@
-import { GitHubRepository } from "@/types/github";
+import { GitHubRepository, RepositoryQualityResult } from "@/types/github";
+import { analyzeReadme } from "../utils/readmeAnalyzer";
 
 type GitHubErrorPayload = {
   message?: string;
@@ -11,11 +12,6 @@ type PackageJson = {
 
 type GitHubContentFile = {
   content: string;
-};
-
-type RepositoryQuality = {
-  repository: string;
-  hasReadme: boolean;
 };
 
 type FetchGitHubOptions = {
@@ -147,12 +143,30 @@ export const detectTechnologies = async (
   return Array.from(technologies);
 };
 
+const createRepositoryQuality = (
+  repository: string,
+  content: string | null,
+): RepositoryQualityResult => {
+  const analysis = analyzeReadme(content);
+
+  return {
+    repository,
+    hasReadme: analysis.hasReadme,
+    readmeScore: analysis.score,
+    hasDescription: analysis.hasDescription,
+    hasInstallation: analysis.hasInstallation,
+    hasUsage: analysis.hasUsage,
+    hasTechnologies: analysis.hasTechnologies,
+    hasLicense: analysis.hasLicense,
+  };
+};
+
 export const analyzeRepositoryQuality = async (
   username: string,
   repositories: GitHubRepository[],
   headers: HeadersInit,
 ) => {
-  const results: RepositoryQuality[] = [];
+  const results: RepositoryQualityResult[] = [];
 
   for (const repository of repositories.slice(0, 10)) {
     try {
@@ -164,15 +178,18 @@ export const analyzeRepositoryQuality = async (
         },
       );
 
-      results.push({
-        repository: repository.name,
-        hasReadme: response.ok,
-      });
+      if (!response.ok) {
+        results.push(createRepositoryQuality(repository.name, null));
+
+        continue;
+      }
+
+      const file: GitHubContentFile = await response.json();
+      const content = Buffer.from(file.content, "base64").toString("utf-8");
+
+      results.push(createRepositoryQuality(repository.name, content));
     } catch {
-      results.push({
-        repository: repository.name,
-        hasReadme: false,
-      });
+      results.push(createRepositoryQuality(repository.name, null));
     }
   }
 

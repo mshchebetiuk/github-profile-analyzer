@@ -271,8 +271,9 @@ export default function Home() {
                 repository={selectedRepositoryAnalysis.repository}
                 score={selectedRepositoryAnalysis.score}
                 hasReadme={selectedRepositoryAnalysis.hasReadme}
-                onClose={() => setSelectedRepositoryId(null)}
                 breakdown={selectedRepositoryAnalysis.breakdown}
+                readmeAnalysis={selectedRepositoryAnalysis.readmeAnalysis}
+                onClose={() => setSelectedRepositoryId(null)}
               />
             )}
 

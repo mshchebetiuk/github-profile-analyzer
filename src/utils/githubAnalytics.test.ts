@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { RepositoryQualityResult } from "@/types/github";
 
 import {
   calculateActivityAnalytics,
@@ -12,6 +13,20 @@ import {
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
+
+const createRepositoryQuality = (
+  repository: string,
+  hasReadme: boolean,
+): RepositoryQualityResult => ({
+  repository,
+  hasReadme,
+  readmeScore: hasReadme ? 20 : 0,
+  hasDescription: false,
+  hasInstallation: false,
+  hasUsage: false,
+  hasTechnologies: false,
+  hasLicense: false,
+});
 
 describe("calculateRepositoryAnalytics", () => {
   it("calculates repository analytics correctly", () => {
@@ -69,22 +84,10 @@ describe("calculateRepositoryAnalytics", () => {
 describe("calculateRepositoryQuality", () => {
   it("calculates README statistics correctly", () => {
     const repositoryQuality = [
-      {
-        repository: "project-one",
-        hasReadme: true,
-      },
-      {
-        repository: "project-two",
-        hasReadme: true,
-      },
-      {
-        repository: "project-three",
-        hasReadme: false,
-      },
-      {
-        repository: "project-four",
-        hasReadme: false,
-      },
+      createRepositoryQuality("project-one", true),
+      createRepositoryQuality("project-two", true),
+      createRepositoryQuality("project-three", false),
+      createRepositoryQuality("project-four", false),
     ];
 
     const result = calculateRepositoryQuality(repositoryQuality);
@@ -102,14 +105,8 @@ describe("calculateRepositoryQuality", () => {
 
   it("returns 100 percent when every repository has a README", () => {
     const repositoryQuality = [
-      {
-        repository: "project-one",
-        hasReadme: true,
-      },
-      {
-        repository: "project-two",
-        hasReadme: true,
-      },
+      createRepositoryQuality("project-one", true),
+      createRepositoryQuality("project-two", true),
     ];
 
     const result = calculateRepositoryQuality(repositoryQuality);
@@ -307,18 +304,9 @@ describe("getTopRepositories", () => {
   ];
 
   const repositoryQuality = [
-    {
-      repository: "strong-project",
-      hasReadme: true,
-    },
-    {
-      repository: "medium-project",
-      hasReadme: true,
-    },
-    {
-      repository: "weak-project",
-      hasReadme: false,
-    },
+    createRepositoryQuality("strong-project", true),
+    createRepositoryQuality("medium-project", true),
+    createRepositoryQuality("weak-project", false),
   ];
 
   it("sorts repositories by score from highest to lowest", () => {
@@ -408,14 +396,8 @@ describe("calculateRepositoryHealth", () => {
     ];
 
     const repositoryQuality = [
-      {
-        repository: "active-project",
-        hasReadme: true,
-      },
-      {
-        repository: "stale-project",
-        hasReadme: false,
-      },
+      createRepositoryQuality("active-project", true),
+      createRepositoryQuality("stale-project", false),
     ];
 
     const result = calculateRepositoryHealth({
@@ -457,14 +439,8 @@ describe("calculateRepositoryHealth", () => {
     ];
 
     const repositoryQuality = [
-      {
-        repository: "project-one",
-        hasReadme: true,
-      },
-      {
-        repository: "project-two",
-        hasReadme: true,
-      },
+      createRepositoryQuality("proejct-one", true),
+      createRepositoryQuality("proejct-two", true),
     ];
 
     const result = calculateRepositoryHealth({
@@ -613,12 +589,7 @@ describe("getRepositoryScoreBreakdown", () => {
 
     const result = getRepositoryScoreBreakdown(
       repository,
-      [
-        {
-          repository: "test-project",
-          hasReadme: true,
-        },
-      ],
+      [createRepositoryQuality("test-project", true)],
       currentTime,
     );
 
@@ -649,7 +620,7 @@ describe("getRepositoryScoreBreakdown", () => {
 
     const result = getRepositoryScoreBreakdown(
       repository,
-      [{ repository: "complate-project", hasReadme: true }],
+      [createRepositoryQuality("complate-project", true)],
       currentTime,
     );
 
@@ -672,7 +643,7 @@ describe("getRepositoryScoreBreakdown", () => {
 
     const result = getRepositoryScoreBreakdown(
       repository,
-      [{ repository: "empty-project", hasReadme: false }],
+      [createRepositoryQuality("empty-project", false)],
       currentTime,
     );
 
@@ -695,7 +666,7 @@ describe("getRepositoryScoreBreakdown", () => {
 
     const result = getRepositoryScoreBreakdown(
       repository,
-      [{ repository: "old-project", hasReadme: false }],
+      [createRepositoryQuality("old-project", false)],
       currentTime,
     );
 

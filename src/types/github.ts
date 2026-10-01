@@ -23,6 +23,12 @@ export type GitHubRepository = {
 export type RepositoryQualityResult = {
   repository: string;
   hasReadme: boolean;
+  readmeScore: number;
+  hasDescription: boolean;
+  hasInstallation: boolean;
+  hasUsage: boolean;
+  hasTechnologies: boolean;
+  hasLicense: boolean;
 };
 
 export type LanguageStatistic = {
