@@ -8,6 +8,15 @@ export type ReadmeAnalysis = {
   score: number;
 };
 
+type ReadmeRecommendationInput = Pick<
+  ReadmeAnalysis,
+  | "hasDescription"
+  | "hasInstallation"
+  | "hasUsage"
+  | "hasTechnologies"
+  | "hasLicense"
+>;
+
 export const analyzeReadme = (content: string | null): ReadmeAnalysis => {
   if (!content?.trim()) {
     return {
@@ -53,4 +62,32 @@ export const analyzeReadme = (content: string | null): ReadmeAnalysis => {
     hasLicense,
     score,
   };
+};
+
+export const getReadmeRecommendations = (
+  analysis: ReadmeRecommendationInput,
+): string[] => {
+  const recommendations: string[] = [];
+
+  if (!analysis.hasDescription) {
+    recommendations.push("Add a clear project description");
+  }
+
+  if (!analysis.hasInstallation) {
+    recommendations.push("Add an Installation or Setup section.");
+  }
+
+  if (!analysis.hasUsage) {
+    recommendations.push("Add a Usage section with examples.");
+  }
+
+  if (!analysis.hasTechnologies) {
+    recommendations.push("Add a Technologies or Tech Stack section.");
+  }
+
+  if (!analysis.hasLicense) {
+    recommendations.push("Add a License section.");
+  }
+
+  return recommendations;
 };

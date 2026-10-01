@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeReadme } from "./readmeAnalyzer";
+import { analyzeReadme, getReadmeRecommendations } from "./readmeAnalyzer";
 
 describe("analyzeReadme", () => {
   it("return zero when README is missing", () => {
@@ -45,5 +45,56 @@ MIT License.
       hasLicense: true,
       score: 100,
     });
+  });
+
+  it("returns recommendations for missing README sections", () => {
+    const analysis = analyzeReadme(`
+# Test Project
+
+This is a detailed project description that explains
+what the application does and provides enough information
+about the purpose of the project.
+
+## Usage
+
+Run the application and open it in the browser.
+    `);
+
+    const recommendations = getReadmeRecommendations(analysis);
+
+    expect(recommendations).toContain("Add an Installation or Setup section.");
+    expect(recommendations).toContain(
+      "Add a Technologies or Tech Stack section.",
+    );
+    expect(recommendations).toContain("Add a License section.");
+    expect(recommendations).not.toContain("Add a Usage section with examples.");
+  });
+
+  it("returns no recommendations for a complete README", () => {
+    const analysis = analyzeReadme(`
+# Test Project
+
+This is a detailed description of the project that contains
+enough information to explain what the application does
+and why it exists.
+
+## Installation
+
+Install dependencies.
+
+## Usage
+
+Run the application.
+
+## Technologies
+
+TypeScript and Next.js.
+
+## License
+
+MIT
+    `);
+
+    expect(getReadmeRecommendations(analysis)).toEqual([]);
   });
 });

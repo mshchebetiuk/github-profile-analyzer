@@ -1,4 +1,5 @@
 import type { GitHubRepository, RepositoryQualityResult } from "@/types/github";
+import { getReadmeRecommendations } from "@/utils/readmeAnalyzer";
 
 type RepositoryDetailsProps = {
   repository: GitHubRepository;
@@ -35,6 +36,10 @@ export default function RepositoryDetails({
     { label: "Forks", value: breakdown.forks, max: 20 },
     { label: "Activity", value: breakdown.activity, max: 20 },
   ];
+
+  const readmeRecommendations = readmeAnalysis
+    ? getReadmeRecommendations(readmeAnalysis)
+    : [];
 
   return (
     <section className="mt-8 rounded-xl border border-gray-200 p-6">
@@ -182,6 +187,33 @@ export default function RepositoryDetails({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {readmeAnalysis && (
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold">README Recommendations</h3>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Suggestions for improving repository documentation.
+          </p>
+
+          {readmeRecommendations.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {readmeRecommendations.map((recommendation) => (
+                <li
+                  key={recommendation}
+                  className="rounded-lg bg-gray-50 p-3 text-sm"
+                >
+                  {recommendation}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 rounded-lg bg-gray-50 p-3 text-sm font-medium text-green-600">
+              ✓ README includes all recommended sections.
+            </p>
+          )}
         </div>
       )}
 
