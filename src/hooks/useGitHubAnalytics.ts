@@ -13,6 +13,7 @@ import {
   getRecommendations,
   generateProfileSummary,
   getRepositoryScoreBreakdown,
+  getRepositoryAssessment,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -47,12 +48,19 @@ export const useGitHubAnalytics = ({
       (item) => item.repository === repository.name,
     );
 
+    const assessment = getRepositoryAssessment(
+      repository,
+      quality ?? null,
+      currentTime,
+    );
+
     return {
       repository,
       score: breakdown.total,
       hasReadme: quality?.hasReadme ?? false,
       breakdown,
       readmeAnalysis: quality ?? null,
+      assessment,
     };
   };
 

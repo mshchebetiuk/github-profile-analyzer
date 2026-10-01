@@ -10,6 +10,7 @@ import {
   getTopRepositories,
   generateProfileSummary,
   getRepositoryScoreBreakdown,
+  getRepositoryAssessment,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -673,5 +674,58 @@ describe("getRepositoryScoreBreakdown", () => {
     expect(result.activity).toBe(0);
     expect(result.readme).toBe(0);
     expect(result.total).toBe(20);
+  });
+});
+
+describe("getRepositoryAssessment", () => {
+  it("returns repository strengths", () => {
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "portfolio",
+      description: "Developer portfolio",
+      html_url: "https://github.com/test/portfolio",
+      language: "TypeScript",
+      stargazers_count: 3,
+      forks_count: 2,
+      updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    const result = getRepositoryAssessment(
+      repository,
+      createRepositoryQuality("portfolio", true),
+      Date.now(),
+    );
+
+    expect(result.strengths).toContain("Project has a description.");
+    expect(result.strengths).toContain("README documentation is available.");
+    expect(result.strengths).toContain("Repository was updated recently.");
+  });
+
+  it("returns repository weaknesses", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "old-project",
+      description: null,
+      html_url: "https://github.com/test/old-project",
+      language: null,
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: new Date(
+        currentTime - 120 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    };
+
+    const result = getRepositoryAssessment(repository, null, currentTime);
+
+    expect(result.weaknesses).toContain("Add a project description.");
+    expect(result.weaknesses).toContain("No primary language detected.");
+    expect(result.weaknesses).toContain("Add a README file.");
+    expect(result.weaknesses).toContain("Repository has no stars yet.");
+    expect(result.weaknesses).toContain("Repository has no forks yet.");
+    expect(result.weaknesses).toContain(
+      "Repository has not been updated recently.",
+    );
   });
 });

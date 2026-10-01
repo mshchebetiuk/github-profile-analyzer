@@ -96,6 +96,11 @@ type ProfileSummary = {
   improvements: string[];
 };
 
+export type RepositoryAssessment = {
+  strengths: string[];
+  weaknesses: string[];
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -682,5 +687,59 @@ export const getRepositoryScoreBreakdown = (
   return {
     ...breakdown,
     total,
+  };
+};
+
+export const getRepositoryAssessment = (
+  repository: GitHubRepository,
+  quality: RepositoryQualityResult | null,
+  currentTime: number,
+): RepositoryAssessment => {
+  const strengths: string[] = [];
+  const weaknesses: string[] = [];
+
+  if (repository.description) {
+    strengths.push("Project has a description.");
+  } else {
+    weaknesses.push("Add a project description.");
+  }
+
+  if (repository.language) {
+    strengths.push(`Primary language detected: ${repository.language}.`);
+  } else {
+    weaknesses.push("No primary language detected.");
+  }
+
+  if (quality?.hasReadme) {
+    strengths.push("README documentation is available.");
+  } else {
+    weaknesses.push("Add a README file.");
+  }
+
+  if (repository.stargazers_count > 0) {
+    strengths.push("Repository has received stars.");
+  } else {
+    weaknesses.push("Repository has no stars yet.");
+  }
+
+  if (repository.forks_count > 0) {
+    strengths.push("Repository has been forked.");
+  } else {
+    weaknesses.push("Repository has no forks yet.");
+  }
+
+  const updatedAt = new Date(repository.updated_at).getTime();
+
+  const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+  if (daysSinceUpdate <= 30) {
+    strengths.push("Repository was updated recently.");
+  } else if (daysSinceUpdate > 90) {
+    weaknesses.push("Repository has not been updated recently.");
+  }
+
+  return {
+    strengths,
+    weaknesses,
   };
 };

@@ -273,6 +273,7 @@ export default function Home() {
                 hasReadme={selectedRepositoryAnalysis.hasReadme}
                 breakdown={selectedRepositoryAnalysis.breakdown}
                 readmeAnalysis={selectedRepositoryAnalysis.readmeAnalysis}
+                assessment={selectedRepositoryAnalysis.assessment}
                 onClose={() => setSelectedRepositoryId(null)}
               />
             )}

@@ -1,5 +1,6 @@
 import type { GitHubRepository, RepositoryQualityResult } from "@/types/github";
 import { getReadmeRecommendations } from "@/utils/readmeAnalyzer";
+import type { RepositoryAssessment } from "@/utils/githubAnalytics";
 
 type RepositoryDetailsProps = {
   repository: GitHubRepository;
@@ -8,6 +9,7 @@ type RepositoryDetailsProps = {
   onClose: () => void;
   breakdown: ScoreBreakdown;
   readmeAnalysis: RepositoryQualityResult | null;
+  assessment: RepositoryAssessment;
 };
 
 type ScoreBreakdown = {
@@ -26,6 +28,7 @@ export default function RepositoryDetails({
   hasReadme,
   breakdown,
   readmeAnalysis,
+  assessment,
   onClose,
 }: RepositoryDetailsProps) {
   const metrics = [
@@ -216,6 +219,58 @@ export default function RepositoryDetails({
           )}
         </div>
       )}
+
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold">Repository Assessment</h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Strengths and areas that could improve this repository.
+        </p>
+
+        <div className="mt-5 grid gap-6 md:grid-cols-2">
+          <div>
+            <h4 className="font-semibold text-green-600">Strengths</h4>
+
+            {assessment.strengths.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {assessment.strengths.map((strength) => (
+                  <li
+                    key={strength}
+                    className="rounded-lg bg-gray-50 p-3 text-sm"
+                  >
+                    ✓ {strength}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-gray-500">
+                No strengths detected yet.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <h4 className="font-semibold">Areas to improve</h4>
+
+            {assessment.weaknesses.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {assessment.weaknesses.map((weakness) => (
+                  <li
+                    key={weakness}
+                    className="rounded-lg bg-gray-50 p-3 text-sm"
+                  >
+                    • {weakness}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-green-600">
+                ✓ No major improvements detected.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
 
       <a
         href={repository.html_url}
