@@ -14,6 +14,7 @@ import {
   generateProfileSummary,
   getRepositoryScoreBreakdown,
   getRepositoryAssessment,
+  calculatePortfolioReadiness,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -54,6 +55,12 @@ export const useGitHubAnalytics = ({
       currentTime,
     );
 
+    const portfolioReadiness = calculatePortfolioReadiness(
+      repository,
+      quality ?? null,
+      currentTime,
+    );
+
     return {
       repository,
       score: breakdown.total,
@@ -61,6 +68,7 @@ export const useGitHubAnalytics = ({
       breakdown,
       readmeAnalysis: quality ?? null,
       assessment,
+      portfolioReadiness,
     };
   };
 

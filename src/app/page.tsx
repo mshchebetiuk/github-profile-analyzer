@@ -274,6 +274,9 @@ export default function Home() {
                 breakdown={selectedRepositoryAnalysis.breakdown}
                 readmeAnalysis={selectedRepositoryAnalysis.readmeAnalysis}
                 assessment={selectedRepositoryAnalysis.assessment}
+                portfolioReadiness={
+                  selectedRepositoryAnalysis.portfolioReadiness
+                }
                 onClose={() => setSelectedRepositoryId(null)}
               />
             )}

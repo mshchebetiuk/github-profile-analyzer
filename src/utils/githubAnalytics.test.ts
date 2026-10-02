@@ -11,6 +11,7 @@ import {
   generateProfileSummary,
   getRepositoryScoreBreakdown,
   getRepositoryAssessment,
+  calculatePortfolioReadiness,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -727,5 +728,119 @@ describe("getRepositoryAssessment", () => {
     expect(result.weaknesses).toContain(
       "Repository has not been updated recently.",
     );
+  });
+});
+
+describe("calculatePortfolioReadiness", () => {
+  it("returns 100 for a portfolio-ready repository", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "portfolio-project",
+      description: "A complete portfolio project",
+      html_url: "https://github.com/test/portfolio-project",
+      language: "TypeScript",
+      stargazers_count: 5,
+      forks_count: 5,
+      updated_at: new Date(
+        currentTime - 10 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    };
+
+    const quality: RepositoryQualityResult = {
+      repository: "portfolio-project",
+      hasReadme: true,
+      readmeScore: 100,
+      hasDescription: true,
+      hasInstallation: true,
+      hasUsage: true,
+      hasTechnologies: true,
+      hasLicense: true,
+    };
+
+    const result = calculatePortfolioReadiness(
+      repository,
+      quality,
+      currentTime,
+    );
+
+    expect(result).toEqual({
+      documentation: 30,
+      projectInfo: 20,
+      activity: 20,
+      popularity: 20,
+      technology: 10,
+      total: 100,
+    });
+  });
+
+  it("returns zero readiness for an incomplete stale repository", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "empty-project",
+      description: null,
+      html_url: "",
+      language: null,
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: new Date(
+        currentTime - 120 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    };
+
+    const result = calculatePortfolioReadiness(repository, null, currentTime);
+
+    expect(result).toEqual({
+      documentation: 0,
+      projectInfo: 0,
+      activity: 0,
+      popularity: 0,
+      technology: 0,
+      total: 0,
+    });
+  });
+
+  it("calculates partial portfolio readiness correctly", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "partial-project",
+      description: "Work in progress",
+      html_url: "https://github.com/test/partial-project",
+      language: "JavaScript",
+      stargazers_count: 2,
+      forks_count: 1,
+      updated_at: new Date(
+        currentTime - 60 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    };
+
+    const quality: RepositoryQualityResult = {
+      repository: "partial-project",
+      hasReadme: true,
+      readmeScore: 40,
+      hasDescription: true,
+      hasInstallation: false,
+      hasUsage: true,
+      hasTechnologies: false,
+      hasLicense: false,
+    };
+
+    const result = calculatePortfolioReadiness(
+      repository,
+      quality,
+      currentTime,
+    );
+
+    expect(result.documentation).toBe(20);
+    expect(result.projectInfo).toBe(20);
+    expect(result.activity).toBe(10);
+    expect(result.popularity).toBe(6);
+    expect(result.technology).toBe(10);
+    expect(result.total).toBe(66);
   });
 });

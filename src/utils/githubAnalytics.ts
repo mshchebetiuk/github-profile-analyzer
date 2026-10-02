@@ -101,6 +101,15 @@ export type RepositoryAssessment = {
   weaknesses: string[];
 };
 
+export type PortfolioReadiness = {
+  documentation: number;
+  projectInfo: number;
+  activity: number;
+  popularity: number;
+  technology: number;
+  total: number;
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -741,5 +750,49 @@ export const getRepositoryAssessment = (
   return {
     strengths,
     weaknesses,
+  };
+};
+
+export const calculatePortfolioReadiness = (
+  repository: GitHubRepository,
+  quality: RepositoryQualityResult | null,
+  currentTime: number,
+): PortfolioReadiness => {
+  let documentation = 0;
+
+  if (quality?.hasReadme) documentation += 10;
+  if (quality?.hasDescription) documentation += 5;
+  if (quality?.hasInstallation) documentation += 5;
+  if (quality?.hasUsage) documentation += 5;
+  if (quality?.hasLicense) documentation += 5;
+
+  let projectInfo = 0;
+
+  if (repository.description) projectInfo += 10;
+  if (repository.html_url) projectInfo += 10;
+
+  const updatedAt = new Date(repository.updated_at).getTime();
+
+  const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+  const activity = daysSinceUpdate <= 30 ? 20 : daysSinceUpdate <= 90 ? 10 : 0;
+
+  const popularity = Math.min(
+    repository.stargazers_count * 2 + repository.forks_count * 2,
+    20,
+  );
+
+  const technology = repository.language ? 10 : 0;
+
+  const total =
+    documentation + projectInfo + activity + popularity + technology;
+
+  return {
+    documentation,
+    projectInfo,
+    activity,
+    popularity,
+    technology,
+    total,
   };
 };

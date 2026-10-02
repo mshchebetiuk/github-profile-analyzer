@@ -1,6 +1,9 @@
 import type { GitHubRepository, RepositoryQualityResult } from "@/types/github";
 import { getReadmeRecommendations } from "@/utils/readmeAnalyzer";
-import type { RepositoryAssessment } from "@/utils/githubAnalytics";
+import type {
+  PortfolioReadiness,
+  RepositoryAssessment,
+} from "@/utils/githubAnalytics";
 
 type RepositoryDetailsProps = {
   repository: GitHubRepository;
@@ -10,6 +13,7 @@ type RepositoryDetailsProps = {
   breakdown: ScoreBreakdown;
   readmeAnalysis: RepositoryQualityResult | null;
   assessment: RepositoryAssessment;
+  portfolioReadiness: PortfolioReadiness;
 };
 
 type ScoreBreakdown = {
@@ -29,6 +33,7 @@ export default function RepositoryDetails({
   breakdown,
   readmeAnalysis,
   assessment,
+  portfolioReadiness,
   onClose,
 }: RepositoryDetailsProps) {
   const metrics = [
@@ -219,6 +224,77 @@ export default function RepositoryDetails({
           )}
         </div>
       )}
+
+      <div className="mt-8">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-semibold">Portfolio Readiness</h3>
+
+            <p className="mt-1 text-sm text-gray-500">
+              How ready this repository is to showscase in a developer
+              portfolio.
+            </p>
+          </div>
+
+          <span className="text-2xl font-bold">
+            {portfolioReadiness.total}/100
+          </span>
+        </div>
+
+        <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-200">
+          <div
+            className="h-full rounded-full bg-green-600 transition-all"
+            style={{ width: `${portfolioReadiness.total}` }}
+          />
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg bg-gray-50 p-3">
+            <div className="flex justify-between text-sm">
+              <span>Documentation</span>
+              <span className="font-medium">
+                {portfolioReadiness.documentation}/30
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-3">
+            <div className="flex justify-between text-sm">
+              <span>Project info</span>
+              <span className="font-medium">
+                {portfolioReadiness.projectInfo}/20
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-3">
+            <div className="flex justify-between text-sm">
+              <span>Activity</span>
+              <span className="font-medium">
+                {portfolioReadiness.activity}/20
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-3">
+            <div className="flex justify-between text-sm">
+              <span>Popularity</span>
+              <span className="font-medium">
+                {portfolioReadiness.popularity}/20
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-3 sm:col-span-2">
+            <div className="flex justify-between text-sm">
+              <span>Technology</span>
+              <span className="font-medium">
+                {portfolioReadiness.technology}/10
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-8">
         <h3 className="text-xl font-semibold">Repository Assessment</h3>
