@@ -8,13 +8,14 @@ import {
   calculateRepositoryInsights,
   calculateRepositoryQuality,
   calculateRepositoryHealth,
-  findBestRepository,
+  calculatePortfolioReadiness,
   getTopRepositories,
   getRecommendations,
   generateProfileSummary,
   getRepositoryScoreBreakdown,
   getRepositoryAssessment,
-  calculatePortfolioReadiness,
+  getRepositoryGrade,
+  findBestRepository,
 } from "@/utils/githubAnalytics";
 
 import type {
@@ -61,6 +62,8 @@ export const useGitHubAnalytics = ({
       currentTime,
     );
 
+    const repositoryGrade = getRepositoryGrade(portfolioReadiness.total);
+
     return {
       repository,
       score: breakdown.total,
@@ -69,6 +72,7 @@ export const useGitHubAnalytics = ({
       readmeAnalysis: quality ?? null,
       assessment,
       portfolioReadiness,
+      repositoryGrade,
     };
   };
 

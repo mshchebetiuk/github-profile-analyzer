@@ -7,11 +7,12 @@ import {
   calculateRepositoryQuality,
   calculateRepositoryHealth,
   calculateProfileScore,
+  calculatePortfolioReadiness,
   getTopRepositories,
   generateProfileSummary,
   getRepositoryScoreBreakdown,
   getRepositoryAssessment,
-  calculatePortfolioReadiness,
+  getRepositoryGrade,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -842,5 +843,27 @@ describe("calculatePortfolioReadiness", () => {
     expect(result.popularity).toBe(6);
     expect(result.technology).toBe(10);
     expect(result.total).toBe(66);
+  });
+});
+
+describe("getRepositoryGrade", () => {
+  it("returns Excellent for scores from 90 to 100", () => {
+    expect(getRepositoryGrade(100)).toBe("Excellent");
+    expect(getRepositoryGrade(90)).toBe("Excellent");
+  });
+
+  it("returns Good for scores from 75 to 89", () => {
+    expect(getRepositoryGrade(89)).toBe("Good");
+    expect(getRepositoryGrade(75)).toBe("Good");
+  });
+
+  it("returns Needs Improvement for scores 50 to 74", () => {
+    expect(getRepositoryGrade(74)).toBe("Needs Improvement");
+    expect(getRepositoryGrade(50)).toBe("Needs Improvement");
+  });
+
+  it("returns Incomplete for scores below 50", () => {
+    expect(getRepositoryGrade(49)).toBe("Incomplete");
+    expect(getRepositoryGrade(0)).toBe("Incomplete");
   });
 });

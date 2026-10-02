@@ -3,6 +3,7 @@ import { getReadmeRecommendations } from "@/utils/readmeAnalyzer";
 import type {
   PortfolioReadiness,
   RepositoryAssessment,
+  RepositoryGrade,
 } from "@/utils/githubAnalytics";
 
 type RepositoryDetailsProps = {
@@ -14,6 +15,7 @@ type RepositoryDetailsProps = {
   readmeAnalysis: RepositoryQualityResult | null;
   assessment: RepositoryAssessment;
   portfolioReadiness: PortfolioReadiness;
+  repositoryGrade: RepositoryGrade;
 };
 
 type ScoreBreakdown = {
@@ -34,6 +36,7 @@ export default function RepositoryDetails({
   readmeAnalysis,
   assessment,
   portfolioReadiness,
+  repositoryGrade,
   onClose,
 }: RepositoryDetailsProps) {
   const metrics = [
@@ -238,6 +241,10 @@ export default function RepositoryDetails({
 
           <span className="text-2xl font-bold">
             {portfolioReadiness.total}/100
+          </span>
+
+          <span className="mt-1 inline-block rounded-full bg-gray-100 px-3 py-1 text-sm font-medium">
+            {repositoryGrade}
           </span>
         </div>
 

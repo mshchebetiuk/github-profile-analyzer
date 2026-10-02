@@ -110,6 +110,12 @@ export type PortfolioReadiness = {
   total: number;
 };
 
+export type RepositoryGrade =
+  | "Excellent"
+  | "Good"
+  | "Needs Improvement"
+  | "Incomplete";
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -795,4 +801,14 @@ export const calculatePortfolioReadiness = (
     technology,
     total,
   };
+};
+
+export const getRepositoryGrade = (
+  portfolioReadiness: number,
+): RepositoryGrade => {
+  if (portfolioReadiness >= 90) return "Excellent";
+  if (portfolioReadiness >= 75) return "Good";
+  if (portfolioReadiness >= 50) return "Needs Improvement";
+
+  return "Incomplete";
 };
