@@ -116,6 +116,13 @@ export type RepositoryGrade =
   | "Needs Improvement"
   | "Incomplete";
 
+export type ImprovementPriority = "high" | "medium" | "low";
+
+export type RepositoryImprovement = {
+  priority: ImprovementPriority;
+  message: string;
+};
+
 export const calculateProfileScore = ({
   user,
   repositories,
@@ -811,4 +818,74 @@ export const getRepositoryGrade = (
   if (portfolioReadiness >= 50) return "Needs Improvement";
 
   return "Incomplete";
+};
+
+export const getRepositoryImprovements = (
+  repository: GitHubRepository,
+  quality: RepositoryQualityResult | null,
+  currentTime: number,
+): RepositoryImprovement[] => {
+  const improvements: RepositoryImprovement[] = [];
+
+  if (!quality?.hasReadme) {
+    improvements.push({
+      priority: "high",
+      message: "Add a README file.",
+    });
+  }
+
+  if (!repository.description) {
+    improvements.push({
+      priority: "high",
+      message: "Add a project description.",
+    });
+  }
+
+  if (quality?.hasReadme && !quality.hasInstallation) {
+    improvements.push({
+      priority: "medium",
+      message: "Add installation instructions.",
+    });
+  }
+
+  if (quality?.hasReadme && !quality.hasUsage) {
+    improvements.push({
+      priority: "medium",
+      message: "Add usage examples.",
+    });
+  }
+
+  if (quality?.hasReadme && !quality.hasTechnologies) {
+    improvements.push({
+      priority: "medium",
+      message: "Document the project technology stack.",
+    });
+  }
+
+  if (quality?.hasReadme && !quality.hasLicense) {
+    improvements.push({
+      priority: "low",
+      message: "Add license information.",
+    });
+  }
+
+  if (!repository.language) {
+    improvements.push({
+      priority: "medium",
+      message: "Make the primary project technology clearer.",
+    });
+  }
+
+  const updatedAt = new Date(repository.updated_at).getTime();
+
+  const daysSinceUpdate = (currentTime - updatedAt) / (1000 * 60 * 60 * 24);
+
+  if (daysSinceUpdate > 90) {
+    improvements.push({
+      priority: "low",
+      message: "Update the repository the demonstrate recent activity.",
+    });
+  }
+
+  return improvements;
 };

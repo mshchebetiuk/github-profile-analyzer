@@ -13,6 +13,7 @@ import {
   getRepositoryScoreBreakdown,
   getRepositoryAssessment,
   getRepositoryGrade,
+  getRepositoryImprovements,
 } from "./githubAnalytics";
 
 import type { GitHubRepository } from "@/types/github";
@@ -865,5 +866,109 @@ describe("getRepositoryGrade", () => {
   it("returns Incomplete for scores below 50", () => {
     expect(getRepositoryGrade(49)).toBe("Incomplete");
     expect(getRepositoryGrade(0)).toBe("Incomplete");
+  });
+});
+
+describe("getRepositoryImprovements", () => {
+  it("returns high priority improvements for missing core information", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "incomplete-project",
+      description: null,
+      html_url: "https://github.com/test/incomplete-project",
+      language: "TypeScript",
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: new Date(
+        currentTime - 10 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    };
+
+    const result = getRepositoryImprovements(repository, null, currentTime);
+
+    expect(result).toContainEqual({
+      priority: "high",
+      message: "Add a README file.",
+    });
+
+    expect(result).toContainEqual({
+      priority: "high",
+      message: "Add a project description.",
+    });
+  });
+
+  it("returns README improvements when sections are missing", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "test-project",
+      description: "Test project",
+      html_url: "https://github.com/test/test-project",
+      language: "TypeScript",
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: new Date(currentTime).toISOString(),
+    };
+
+    const quality: RepositoryQualityResult = {
+      repository: "test-project",
+      hasReadme: true,
+      readmeScore: 40,
+      hasDescription: true,
+      hasInstallation: false,
+      hasUsage: false,
+      hasTechnologies: false,
+      hasLicense: false,
+    };
+
+    const result = getRepositoryImprovements(repository, quality, currentTime);
+
+    expect(result).toContainEqual({
+      priority: "medium",
+      message: "Add installation instructions.",
+    });
+
+    expect(result).toContainEqual({
+      priority: "medium",
+      message: "Add usage examples.",
+    });
+
+    expect(result).toContainEqual({
+      priority: "low",
+      message: "Add license information.",
+    });
+  });
+
+  it("returns no improvements for a complete active repository", () => {
+    const currentTime = Date.now();
+
+    const repository: GitHubRepository = {
+      id: 1,
+      name: "complate-project",
+      description: "Complate portfolio project",
+      html_url: "https://github.com/test/complete-project",
+      language: "TypeScript",
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: new Date(currentTime).toISOString(),
+    };
+
+    const quality: RepositoryQualityResult = {
+      repository: "complete-project",
+      hasReadme: true,
+      readmeScore: 100,
+      hasDescription: true,
+      hasInstallation: true,
+      hasUsage: true,
+      hasTechnologies: true,
+      hasLicense: true,
+    };
+
+    expect(getRepositoryImprovements(repository, quality, currentTime)).toEqual(
+      [],
+    );
   });
 });

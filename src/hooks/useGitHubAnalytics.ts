@@ -15,6 +15,7 @@ import {
   getRepositoryScoreBreakdown,
   getRepositoryAssessment,
   getRepositoryGrade,
+  getRepositoryImprovements,
   findBestRepository,
 } from "@/utils/githubAnalytics";
 
@@ -64,6 +65,12 @@ export const useGitHubAnalytics = ({
 
     const repositoryGrade = getRepositoryGrade(portfolioReadiness.total);
 
+    const improvements = getRepositoryImprovements(
+      repository,
+      quality ?? null,
+      currentTime,
+    );
+
     return {
       repository,
       score: breakdown.total,
@@ -73,6 +80,7 @@ export const useGitHubAnalytics = ({
       assessment,
       portfolioReadiness,
       repositoryGrade,
+      improvements,
     };
   };
 

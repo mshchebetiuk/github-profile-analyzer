@@ -278,6 +278,7 @@ export default function Home() {
                   selectedRepositoryAnalysis.portfolioReadiness
                 }
                 repositoryGrade={selectedRepositoryAnalysis.repositoryGrade}
+                improvements={selectedRepositoryAnalysis.improvements}
                 onClose={() => setSelectedRepositoryId(null)}
               />
             )}

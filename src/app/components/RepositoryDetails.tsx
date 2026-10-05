@@ -4,6 +4,7 @@ import type {
   PortfolioReadiness,
   RepositoryAssessment,
   RepositoryGrade,
+  RepositoryImprovement,
 } from "@/utils/githubAnalytics";
 
 type RepositoryDetailsProps = {
@@ -16,6 +17,7 @@ type RepositoryDetailsProps = {
   assessment: RepositoryAssessment;
   portfolioReadiness: PortfolioReadiness;
   repositoryGrade: RepositoryGrade;
+  improvements: RepositoryImprovement[];
 };
 
 type ScoreBreakdown = {
@@ -37,6 +39,7 @@ export default function RepositoryDetails({
   assessment,
   portfolioReadiness,
   repositoryGrade,
+  improvements,
   onClose,
 }: RepositoryDetailsProps) {
   const metrics = [
@@ -301,6 +304,51 @@ export default function RepositoryDetails({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold">Priority Improvements</h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Recommended actions ordered by importance.
+        </p>
+
+        {improvements.length > 0 ? (
+          <div className="mt-5 space-y-5">
+            {(["high", "medium", "low"] as const).map((priority) => {
+              const priorityImprovements = improvements.filter(
+                (improvements) => improvements.priority === priority,
+              );
+
+              if (priorityImprovements.length === 0) {
+                return null;
+              }
+
+              return (
+                <div key={priority}>
+                  <h4 className="text-sm font-semibold uppercase tracking-wide">
+                    {priority}
+                  </h4>
+
+                  <ul className="mt-2 space-y-2">
+                    {priorityImprovements.map((improvement) => (
+                      <li
+                        key={improvement.message}
+                        className="rounded-lg bg-gray-50 px-4 py-3 text-sm"
+                      >
+                        {improvement.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-green-600">
+            ✓ No priority improvements detected.
+          </p>
+        )}
       </div>
 
       <div className="mt-8">
