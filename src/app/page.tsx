@@ -266,23 +266,6 @@ export default function Home() {
               onAnalyze={setSelectedRepositoryId}
             />
 
-            {selectedRepositoryAnalysis && (
-              <RepositoryDetails
-                repository={selectedRepositoryAnalysis.repository}
-                score={selectedRepositoryAnalysis.score}
-                hasReadme={selectedRepositoryAnalysis.hasReadme}
-                breakdown={selectedRepositoryAnalysis.breakdown}
-                readmeAnalysis={selectedRepositoryAnalysis.readmeAnalysis}
-                assessment={selectedRepositoryAnalysis.assessment}
-                portfolioReadiness={
-                  selectedRepositoryAnalysis.portfolioReadiness
-                }
-                repositoryGrade={selectedRepositoryAnalysis.repositoryGrade}
-                improvements={selectedRepositoryAnalysis.improvements}
-                onClose={() => setSelectedRepositoryId(null)}
-              />
-            )}
-
             <ProfileScore score={profileScore} />
 
             <Recommendations recommendations={recommendations} />
@@ -305,6 +288,23 @@ export default function Home() {
               onShowLess={showLessRepositories}
               onAnalyze={setSelectedRepositoryId}
             />
+
+            {selectedRepositoryAnalysis && (
+              <RepositoryDetails
+                repository={selectedRepositoryAnalysis.repository}
+                score={selectedRepositoryAnalysis.score}
+                hasReadme={selectedRepositoryAnalysis.hasReadme}
+                breakdown={selectedRepositoryAnalysis.breakdown}
+                readmeAnalysis={selectedRepositoryAnalysis.readmeAnalysis}
+                assessment={selectedRepositoryAnalysis.assessment}
+                portfolioReadiness={
+                  selectedRepositoryAnalysis.portfolioReadiness
+                }
+                repositoryGrade={selectedRepositoryAnalysis.repositoryGrade}
+                improvements={selectedRepositoryAnalysis.improvements}
+                onClose={() => setSelectedRepositoryId(null)}
+              />
+            )}
           </>
         )}
       </section>

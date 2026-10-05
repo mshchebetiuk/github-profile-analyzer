@@ -35,7 +35,7 @@ export const filterAndSortRepositories = ({
           false);
 
       const matchesLanguage =
-        language === "ALL" || repository.language === language;
+        language === "All" || repository.language === language;
 
       return matchesSearch && matchesLanguage;
     })
